@@ -7,17 +7,24 @@ import mongoose, { Document, Schema } from "mongoose";
 // 🔒 Interface
 export interface IUser extends Document {
   email: string;
-  upiId: string;
-  points: number;
   lastName: string;
-  password: string;
+  password?: string;
   fcmToken?: string;
   firstName: string;
   dateOfBirth: Date;
   phoneNumber: string;
-  generateJWT(): string;
+  role?: string;
+  status: "active" | "pending";
   profilePicture?: string;
-  comparePassword(candidatePassword: string): Promise<boolean>;
+  userProfile?: {
+    sms?: boolean;
+    push?: boolean;
+    email?: boolean;
+  };
+  businessDetail?: Record<string, any>;
+  contactDetail?: Record<string, any>;
+  generateJWT(): string;
+  comparePassword?(candidatePassword: string): Promise<boolean>;
 }
 
 // 📄 Schema
@@ -40,22 +47,18 @@ const userSchema = new Schema<IUser>(
     email: {
       type: String,
       required: true,
-      unique: true, // ✅ This already creates a unique index
+      unique: true,
       lowercase: true,
       validate: [validator.isEmail, "Invalid email"],
     },
     phoneNumber: {
       type: String,
       required: true,
-      unique: true, // ✅ This already creates a unique index
+      unique: true,
       validate: {
         validator: (val: string) => /^[6-9]\d{9}$/.test(val),
         message: "Invalid Indian mobile number",
       },
-    },
-    upiId: {
-      type: String,
-      trim: true,
     },
     dateOfBirth: {
       type: Date,
@@ -65,41 +68,65 @@ const userSchema = new Schema<IUser>(
         message: "Date of birth must be in the past",
       },
     },
+    profilePicture: {
+      type: String,
+      trim: true,
+    },
+    userProfile: {
+      sms: { type: Boolean, default: true },
+      push: { type: Boolean, default: true },
+      email: { type: Boolean, default: true },
+    },
+    role: {
+      type: String,
+      default: "user",
+    },
+    status: {
+      type: String,
+      enum: ["active", "pending"],
+      default: function () {
+        return this.role === "user" ? "active" : "pending";
+      },
+    },
     password: {
       type: String,
       required: true,
       minlength: 6,
       select: false,
     },
-    points: {
-      type: Number,
-      default: 0,
+    businessDetail: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
-    profilePicture: {
-      type: String,
+    contactDetail: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   { timestamps: true }
 );
 
-// 🔐 Password Hash Middleware
+// 🔐 Password Hashing Middleware
 userSchema.pre("save", async function (next) {
   const user = this as IUser;
   if (!user.isModified("password")) return next();
-
-  const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(user.password, salt);
-  next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password!, salt);
+    next();
+  } catch (err) {
+    next(err as any);
+  }
 });
 
-// ✅ Compare Password
+// 🔍 Password Comparison Method
 userSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
-  return await bcrypt.compare(candidatePassword, this.password);
+  return bcrypt.compare(candidatePassword, this.password!);
 };
 
-// 🪪 Generate JWT
+// 🪪 JWT Method
 userSchema.methods.generateJWT = function (): string {
   return jwt.sign({ id: this._id, email: this.email }, config.jwt.secret, {
     expiresIn: "7d",

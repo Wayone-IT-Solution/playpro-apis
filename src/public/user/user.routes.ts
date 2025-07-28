@@ -4,15 +4,15 @@ import {
   verifyOtp,
   getAllOtps,
   updateUser,
-  getAllUsers,
   getUserById,
   generateOtp,
   registerUser,
   getUserProfile,
+  getCurrentUser,
   uploadProfilePicture,
 } from "./user.controller";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { changePasswordWithOtp } from "./user.controller";
+
 import {
   isUser,
   isAdmin,
@@ -30,8 +30,6 @@ userRouter.post("/login", asyncHandler(loginUser));
 userRouter.post("/send-otp", asyncHandler(generateOtp));
 userRouter.post("/verify-otp", asyncHandler(verifyOtp));
 userRouter.put("/", authenticateToken, isUser, asyncHandler(updateUser));
-userRouter.get("/profile", authenticateToken, asyncHandler(getUserProfile));
-userRouter.post("/change-password-otp", asyncHandler(changePasswordWithOtp));
 userRouter.put(
   "/profile",
   authenticateToken,
@@ -40,10 +38,11 @@ userRouter.put(
   s3UploaderMiddleware("profile"),
   asyncHandler(uploadProfilePicture)
 );
+userRouter.get("/", authenticateToken, isUser, asyncHandler(getCurrentUser));
 
 // ✅ Admin Routes
 userRouter.get("/otp/all", authenticateToken, asyncHandler(getAllOtps));
-userRouter.get("/", authenticateToken, isAdmin, asyncHandler(getAllUsers));
+
 userRouter.get("/:id", authenticateToken, isAdmin, asyncHandler(getUserById));
 
 export default userRouter;

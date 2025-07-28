@@ -13,6 +13,8 @@ import bannerRoutes from "../admin/banner/banner.routes";
 // PUBLIC FOLDER
 import userRoutes from "../public/user/user.routes";
 import stateCityRoutes from "../public/statecity/statecity.routes";
+import groundOwner from "../public/groundOwner/ground.routes";
+import groundSlot from "../public/slot/slot.routes";
 
 // Create main router
 const router = Router();
@@ -27,5 +29,8 @@ router.use("/banner", bannerRoutes);
 router.use("/location", stateCityRoutes);
 
 router.use("/user", userRoutes);
+router.use("/ground", groundOwner);
+router.use("/slot", groundSlot);
+
 
 export default router;

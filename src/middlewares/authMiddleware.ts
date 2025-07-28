@@ -2,10 +2,11 @@ import jwt from "jsonwebtoken";
 import Admin from "../modals/admin.model";
 import { config } from "../config/config";
 import { User } from "../modals/user.model";
+import {Ground}from "../modals/groundOwner.model";
 import { Request, Response, NextFunction } from "express";
 
-// Role type
-export type Role = "admin" | "user";
+// ✅ Role type now includes 'ground'
+export type Role = "admin" | "user" | "ground";
 
 // Extend Express Request with typed user
 export interface AuthenticatedRequest extends Request {
@@ -158,13 +159,15 @@ export const checkRole: any =
     next();
   };
 
-// Utility: Map role to respective model
+// ✅ Utility: Map role to respective model (now includes ground)
 const getModelByRole = (role: Role) => {
   switch (role) {
     case "admin":
       return Admin;
     case "user":
       return User;
+    case "ground":
+      return Ground;
     default:
       return null;
   }
@@ -174,6 +177,7 @@ const getModelByRole = (role: Role) => {
 const capitalize = (text: string): string =>
   text.charAt(0).toUpperCase() + text.slice(1);
 
-// Export reusable role-based middlewares
+// ✅ Export reusable role-based middlewares
 export const isUser = checkRole("user");
 export const isAdmin = checkRole("admin");
+export const isGround = checkRole("ground"); // ✅ New middleware
