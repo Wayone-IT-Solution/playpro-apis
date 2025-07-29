@@ -4,6 +4,7 @@ import mongoose, { Schema, Document, Types, model } from "mongoose";
 export interface ITimeSlot {
   date: Date;
   endTime: string;
+  amount: number;
   duration?: string;
   startTime: string;
   isBooked?: boolean;
@@ -17,35 +18,37 @@ export interface ISlot extends Document {
 }
 
 /** TimeSlot Schema */
-const TimeSlotSchema = new Schema<ITimeSlot>(
-  {
-    date: {
-      type: Date,
-      required: true,
-    },
-    duration: {
-      type: String,
-      default: "30",
-    },
-    startTime: {
-      type: String,
-      required: true,
-    },
-    endTime: {
-      type: String,
-      required: true,
-    },
-    isBooked: {
-      type: Boolean,
-      default: false,
-    },
-    bookedBy: {
-      ref: "User",
-      default: null,
-      type: Schema.Types.ObjectId,
-    },
+const TimeSlotSchema = new Schema<ITimeSlot>({
+  date: {
+    type: Date,
+    required: true,
   },
-);
+  duration: {
+    type: String,
+    default: "30",
+  },
+  startTime: {
+    type: String,
+    required: true,
+  },
+  amount: {
+    type: Number,
+    default: 0,
+  },
+  endTime: {
+    type: String,
+    required: true,
+  },
+  isBooked: {
+    type: Boolean,
+    default: false,
+  },
+  bookedBy: {
+    ref: "User",
+    default: null,
+    type: Schema.Types.ObjectId,
+  },
+});
 
 /** Slot Schema */
 const SlotSchema = new Schema<ISlot>(

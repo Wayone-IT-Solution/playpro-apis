@@ -15,7 +15,8 @@ import userRoutes from "../public/user/user.routes";
 import stateCityRoutes from "../public/statecity/statecity.routes";
 import groundOwner from "../public/groundOwner/ground.routes";
 import groundSlot from "../public/slot/slot.routes";
-
+import booking from "../public/booking/booking.route"
+import review from "../public/review/review.route";
 // Create main router
 const router = Router();
 
@@ -31,6 +32,8 @@ router.use("/location", stateCityRoutes);
 router.use("/user", userRoutes);
 router.use("/ground", groundOwner);
 router.use("/slot", groundSlot);
+router.use("/booking", booking );
+router.use("/review",review);
 
 
 export default router;

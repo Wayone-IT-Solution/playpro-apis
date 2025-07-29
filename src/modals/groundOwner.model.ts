@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IGround extends Document {
   userId: mongoose.Schema.Types.ObjectId;
   name: string;
+  status: string;
   address: string;
   description?: string;
   location: {
@@ -24,6 +25,11 @@ const groundSchema = new Schema<IGround>(
     name: {
       type: String,
       required: true,
+    },
+    status: {
+      type: String,
+      required: true,
+      default: "active",
     },
     address: {
       type: String,
