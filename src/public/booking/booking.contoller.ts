@@ -3,7 +3,6 @@ import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
 import { Booking } from "../../modals/booking.model";
 import { Ground } from "../../modals/groundOwner.model";
 import { Slot } from "../../modals/slot.model";
-import httpStatus from "http-status";
 import ApiError from "../../utils/ApiError";
 import mongoose from "mongoose";
 import ApiResponse from "../../utils/ApiResponse";
@@ -28,7 +27,7 @@ export const createBooking = async (
 
     // 🔒 Validate required fields
     if (!groundId || !slots.length || !numberOfGuests) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields");
+      throw new ApiError(400, "Missing required fields");
     }
 
     // 📦 Fetch ground
@@ -38,7 +37,7 @@ export const createBooking = async (
     }).lean();
 
     if (!groundData) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Ground not found");
+      throw new ApiError(404, "Ground not found");
     }
 
     const groundAmount = groundData.pricePerHour || 0;
@@ -121,7 +120,7 @@ export const createBooking = async (
       finalAmount: totalAmount,
     });
 
-    return res.status(httpStatus.CREATED).json({
+    return res.status(200).json({
       success: true,
       message: "Booking created successfully",
       data: booking,
