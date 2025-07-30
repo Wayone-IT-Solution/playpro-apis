@@ -4,11 +4,11 @@ export interface IBooking extends Document {
   userId: mongoose.Types.ObjectId;
   groundId: mongoose.Types.ObjectId;
   slots: mongoose.Types.ObjectId[]; // Array of slot IDs
-
+  rescheduled?: boolean;
   totalAmount: number;
   finalAmount: number;
   numberOfGuests: number;
-  status: "pending" | "confirmed" | "cancelled" | "completed";
+  status: "pending" | "confirmed" | "cancelled" | "completed" | "rescheduled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentId?: string;
   notes: Record<string, any>; // empty object by default
@@ -33,9 +33,9 @@ const bookingSchema = new Schema<IBooking>(
       ref: "Ground",
       required: true,
     },
-    paymentId:{
+    paymentId: {
       type: String,
-      default: null
+      default: null,
     },
     slots: [
       {
@@ -61,9 +61,13 @@ const bookingSchema = new Schema<IBooking>(
       required: true,
       min: 1,
     },
+    rescheduled: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled", "completed"],
+      enum: ["pending", "confirmed", "cancelled", "completed", "rescheduled"],
       default: "pending",
     },
     paymentStatus: {

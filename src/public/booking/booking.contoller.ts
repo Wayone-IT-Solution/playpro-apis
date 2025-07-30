@@ -253,3 +253,131 @@ export const getAllBookings = async (
     next(error);
   }
 };
+
+export const rescheduleBooking = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+    const { bookingId, newSlotIds = [] } = req.body;
+
+    if (!bookingId || !newSlotIds.length) {
+      throw new ApiError(400, "Booking ID and new slot IDs are required");
+    }
+
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      throw new ApiError(404, "Booking not found");
+    }
+
+    // ✅ Free previous slots
+    for (const slotId of booking.slots) {
+      await Slot.updateOne(
+        { "timeslots._id": slotId },
+        {
+          $set: {
+            "timeslots.$.isBooked": false,
+            "timeslots.$.bookedBy": null,
+          },
+        }
+      );
+    }
+
+    // ✅ Check if all new slots are available
+    const objectSlotIds = newSlotIds.map(
+      (id: any) => new mongoose.Types.ObjectId(id)
+    );
+
+    const result = await Slot.aggregate([
+      {
+        $match: { groundId: new mongoose.Types.ObjectId(booking.groundId) },
+      },
+      {
+        $project: {
+          groundId: 1,
+          timeslots: {
+            $filter: {
+              input: "$timeslots",
+              as: "slot",
+              cond: {
+                $and: [
+                  { $in: ["$$slot._id", objectSlotIds] },
+                  { $eq: ["$$slot.isBooked", false] },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    if (!result.length || result[0].timeslots.length !== newSlotIds.length) {
+      throw new ApiError(400, "Some new slots are already booked or invalid");
+    }
+
+    // ✅ Mark new slots as booked
+    for (const slotId of newSlotIds) {
+      await Slot.updateOne(
+        { "timeslots._id": slotId },
+        {
+          $set: {
+            "timeslots.$.isBooked": true,
+            "timeslots.$.bookedBy": userId,
+          },
+        }
+      );
+    }
+
+    const user = await User.findById(userId);
+    const ground = await Ground.findById(booking.groundId);
+
+    const objectSlotIds2 = newSlotIds.map(
+      (id: any) => new mongoose.Types.ObjectId(id)
+    );
+
+    const results = await Slot.aggregate([
+      {
+        $match: { groundId: new mongoose.Types.ObjectId(booking.groundId) },
+      },
+      {
+        $project: {
+          groundId: 1,
+          timeslots: {
+            $filter: {
+              input: "$timeslots",
+              as: "slot",
+              cond: {
+                $and: [{ $in: ["$$slot._id", objectSlotIds2] }],
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    const meta = {
+      user,
+      ground,
+      slots: results?.[0]?.timeslots,
+    };
+
+    booking.slots = newSlotIds;
+    booking.status = "rescheduled";
+    booking.rescheduled = true;
+    booking.meta = meta;
+
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking rescheduled successfully",
+      data: booking,
+    });
+  } catch (err) {
+    console.error("❌ Error in rescheduleBooking:", err);
+    next(err);
+  }
+};

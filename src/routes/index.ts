@@ -17,6 +17,9 @@ import groundOwner from "../public/groundOwner/ground.routes";
 import groundSlot from "../public/slot/slot.routes";
 import booking from "../public/booking/booking.route"
 import review from "../public/review/review.route";
+import category from "../public/category/category.route";
+import blog from "../public/blog/blog.route";
+import testimonial from "../public/testimonial/testimonial.routes"
 // Create main router
 const router = Router();
 
@@ -34,6 +37,9 @@ router.use("/ground", groundOwner);
 router.use("/slot", groundSlot);
 router.use("/booking", booking );
 router.use("/review",review);
+router.use("/category",category);
+router.use("/blog",blog);
+router.use("/testimonial",testimonial);
 
 
 export default router;

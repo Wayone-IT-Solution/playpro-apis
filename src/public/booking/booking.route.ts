@@ -3,8 +3,8 @@ import {
   createBooking,
   getAllBookings,
   getBookingById,
+  rescheduleBooking,
   updateBooking,
- 
 } from "../../public/booking/booking.contoller";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { authenticateToken } from "../../middlewares/authMiddleware";
@@ -22,6 +22,7 @@ router.get("/:id", authenticateToken, asyncHandler(getBookingById));
 
 // Update booking by ID
 router.put("/", authenticateToken, asyncHandler(updateBooking));
+router.put("/reschedule", authenticateToken, asyncHandler(rescheduleBooking));
 
 // // Delete booking by ID
 // router.delete("/:id", authenticateToken, asyncHandler(deleteBooking));
