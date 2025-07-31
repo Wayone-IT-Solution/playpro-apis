@@ -242,7 +242,51 @@ export const getAllBookings = async (
   next: NextFunction
 ) => {
   try {
-    const bookings = await bookingService.getAll(req.query);
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userData",
+        },
+      },
+      { $unwind: "$userData" },
+      {
+        $lookup: {
+          from: "grounds",
+          localField: "groundId",
+          foreignField: "_id",
+          as: "groundData",
+        },
+      },
+      { $unwind: "$groundData" },
+      {
+        $project: {
+          _id: 1,
+          totalAmount: 1,
+          finalAmount: 1,
+          numberOfGuests: 1,
+          rescheduled: 1,
+          status: 1,
+          paymentStatus: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          userEmail: "$userData.email",
+          userFirstName: "$userData.firstName",
+          userLastName: "$userData.lastName",
+          userPhoneNumber: "$userData.phoneNumber",
+          groundName: "$groundData.name",
+          groundAddress: "$groundData.address",
+          groundLocation: "$groundData.location",
+        },
+      },
+    ];
+    const { status } = req.params;
+    const bookings = await bookingService.getAll(
+      { ...req.query, status },
+      pipeline
+    );
     return res.status(200).json({
       success: true,
       message: "All bookings fetched successfully",

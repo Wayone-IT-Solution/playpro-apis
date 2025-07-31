@@ -1,7 +1,5 @@
 import { Schema, model, Document } from "mongoose";
 
-export type UserType = "worker" | "contractor" | "employer";
-
 export interface IBanner extends Document {
   title: string;
   order: number;
@@ -9,8 +7,7 @@ export interface IBanner extends Document {
   createdAt: Date;
   updatedAt: Date;
   isActive: string;
-  userType: UserType;
-  description: string;
+description: string;
 }
 
 const bannerSchema = new Schema<IBanner>(

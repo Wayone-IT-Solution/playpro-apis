@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/", authenticateToken, asyncHandler(createBooking));
 
 // // Get all bookings
-router.get("/", authenticateToken, asyncHandler(getAllBookings));
+router.get("/:status?", authenticateToken, asyncHandler(getAllBookings));
 
 // // Get booking by ID
 router.get("/:id", authenticateToken, asyncHandler(getBookingById));

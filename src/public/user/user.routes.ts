@@ -10,6 +10,7 @@ import {
   getUserProfile,
   getCurrentUser,
   uploadProfilePicture,
+  getAllUsers,
 } from "./user.controller";
 import { asyncHandler } from "../../utils/asyncHandler";
 
@@ -27,6 +28,7 @@ const userRouter = Router();
 
 userRouter.post("/", asyncHandler(registerUser));
 userRouter.post("/login", asyncHandler(loginUser));
+userRouter.get("/:userType", authenticateToken, asyncHandler(getAllUsers));
 userRouter.post("/send-otp", asyncHandler(generateOtp));
 userRouter.post("/verify-otp", asyncHandler(verifyOtp));
 userRouter.put("/", authenticateToken, isUser, asyncHandler(updateUser));

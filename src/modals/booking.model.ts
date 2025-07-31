@@ -8,7 +8,7 @@ export interface IBooking extends Document {
   totalAmount: number;
   finalAmount: number;
   numberOfGuests: number;
-  status: "pending" | "confirmed" | "cancelled" | "completed" | "rescheduled";
+  status: "pending" | "confirmed" | "completed" | "rescheduled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentId?: string;
   notes: Record<string, any>; // empty object by default
@@ -67,7 +67,7 @@ const bookingSchema = new Schema<IBooking>(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled", "completed", "rescheduled"],
+      enum: ["pending", "confirmed", "completed", "rescheduled"],
       default: "pending",
     },
     paymentStatus: {

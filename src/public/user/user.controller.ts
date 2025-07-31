@@ -98,6 +98,21 @@ export const loginUser = async (
     next(error);
   }
 };
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userType } = req.params;
+    const users = await userService.getAll({ ...req.query, role: userType });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, users, "All users fetched successfully"));
+  } catch (error) {
+    next(error);
+  }
+};
 
 // 👤 Get Profile
 export const getUserProfile = async (
@@ -107,7 +122,7 @@ export const getUserProfile = async (
 ) => {
   try {
     const userId = req.user?.id;
-    const user = await User.findById(userId).select("-password");
+    const user = await userService.getById(req.user?.id!, false);
     if (!user) throw new ApiError(404, "User not found");
 
     return res.status(200).json(new ApiResponse(200, user, "Profile fetched"));
@@ -124,7 +139,7 @@ export const getUserById = async (
 ) => {
   try {
     const userId = req.params?.id;
-    const user = await User.findById(userId).select("-password");
+    const user = await userService.getById(userId!, false);
     if (!user) throw new ApiError(404, "User not found");
 
     return res
@@ -184,7 +199,7 @@ export const getAllOtps = async (
   next: NextFunction
 ) => {
   try {
-    const otps = await Otp.find().sort({ createdAt: -1 }); // descending order
+    const otps = await otpService.getAll(req.query);
     return res
       .status(200)
       .json(new ApiResponse(200, otps, "All OTPs fetched successfully"));

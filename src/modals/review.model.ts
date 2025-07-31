@@ -40,7 +40,7 @@ const ReviewSchema = new Schema<IReview>(
     status: {
       type: String,
       enum: ["active", "inactive"],
-      default: "active",
+      default: "inactive",
     },
   },
   { timestamps: true }

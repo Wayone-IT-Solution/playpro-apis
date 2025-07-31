@@ -2,6 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { Ground } from "../../modals/groundOwner.model";
 import ApiError from "../../utils/ApiError";
 import { deleteFromS3 } from "../../config/s3Uploader";
+import { CommonService } from "../../services/common.services";
+import ApiResponse from "../../utils/ApiResponse";
+
+const groundService = new CommonService(Ground);
 
 export class GroundController {
   static async createGround(req: Request, res: Response, next: NextFunction) {
@@ -87,10 +91,11 @@ export class GroundController {
 
   static async getGroundById(req: Request, res: Response, next: NextFunction) {
     try {
-      const ground = await Ground.findById(req.params.id);
+      const ground = await groundService.getById(req.params.id);
       if (!ground) return next(new ApiError(404, "Ground not found"));
-
-      res.status(200).json({ data: ground });
+      res
+        .status(200)
+        .json(new ApiResponse(200, ground, "Data fetched successfully!"));
     } catch (err) {
       next(err);
     }
@@ -99,8 +104,51 @@ export class GroundController {
   static async getMyGrounds(req: Request, res: Response, next: NextFunction) {
     try {
       const user = (req as any).user;
-      const grounds = await Ground.find({ userId: user.id });
-      res.status(200).json({ data: grounds });
+      const grounds = await groundService.getAll({
+        userId: user.id,
+        ...req.query,
+      });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, grounds, "Data fetched successfully"));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getAllGrounds(req: Request, res: Response, next: NextFunction) {
+    try {
+      const pipeline = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userData",
+          },
+        },
+        { $unwind: "$userData" },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            status: 1,
+            address: 1,
+            updatedAt: 1,
+            createdAt: 1,
+            pricePerHour: 1,
+            description: 1,
+            email: "$userData.email",
+            lastName: "$userData.lastName",
+            firstName: "$userData.firstName",
+            mobile: "$userData.phoneNumber",
+          },
+        },
+      ];
+      const grounds = await groundService.getAll(req.query, pipeline);
+      return res
+        .status(200)
+        .json(new ApiResponse(200, grounds, "Data fetched successfully"));
     } catch (err) {
       next(err);
     }

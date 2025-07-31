@@ -4,6 +4,9 @@ import { Booking } from "../../modals/booking.model";
 import ApiResponse from "../../utils/ApiResponse";
 import ApiError from "../../utils/ApiError";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { CommonService } from "../../services/common.services";
+
+const reviewService = new CommonService(Review);
 
 export const createReview = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -53,15 +56,21 @@ export const getReviewsByGround = asyncHandler(
 export const getReviewByIdAdmin = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const review = await Review.findById(id)
-      .populate("userId", "firstName lastName")
-      .populate("groundId", "name");
-
+    const review = await reviewService.getById(id);
     if (!review) throw new ApiError(404, "Review not found");
-
     res
       .status(200)
       .json(new ApiResponse(200, review, "Review fetched successfully"));
+  }
+);
+
+export const updateStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const updated = await reviewService.updateById(id, req.body);
+    return res
+      .status(201)
+      .json(new ApiResponse(200, updated, "Status Updated"));
   }
 );
 
@@ -79,11 +88,44 @@ export const deleteReviewByIdAdmin = asyncHandler(
 
 export const getAllReviewsAdmin = asyncHandler(
   async (req: Request, res: Response) => {
-    const reviews = await Review.find({})
-      .populate("userId", "firstName lastName")
-      .populate("groundId", "name")
-      .sort({ createdAt: -1 });
-
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userData",
+        },
+      },
+      { $unwind: "$userData" },
+      {
+        $lookup: {
+          from: "grounds",
+          localField: "groundId",
+          foreignField: "_id",
+          as: "groundData",
+        },
+      },
+      { $unwind: "$groundData" },
+      {
+        $project: {
+          _id: 1,
+          status: 1,
+          ratings: 1,
+          feedback: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          userEmail: "$userData.email",
+          userFirstName: "$userData.firstName",
+          userLastName: "$userData.lastName",
+          userPhoneNumber: "$userData.phoneNumber",
+          groundName: "$groundData.name",
+          groundAddress: "$groundData.address",
+          groundLocation: "$groundData.location",
+        },
+      },
+    ];
+    const reviews = await reviewService.getAll(req.query, pipeline);
     res
       .status(200)
       .json(new ApiResponse(200, reviews, "All reviews fetched successfully"));

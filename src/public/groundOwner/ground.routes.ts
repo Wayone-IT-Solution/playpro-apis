@@ -23,12 +23,21 @@ router.put(
   s3UploaderMiddleware("ground"),
   asyncHandler(GroundController.updateGround)
 ); // Update ground
-router.get("/search", asyncHandler(GroundController.searchGrounds)); // Search grounds
 router.get(
-  "/my",
+  "/search",
+  authenticateToken,
+  asyncHandler(GroundController.searchGrounds)
+);
+router.get(
+  "/user",
   authenticateToken,
   asyncHandler(GroundController.getMyGrounds)
-); // Get user's grounds
+);
+router.get(
+  "/",
+  authenticateToken,
+  asyncHandler(GroundController.getAllGrounds)
+);
 router.get("/:id", asyncHandler(GroundController.getGroundById));
 router.delete(
   "/image",
