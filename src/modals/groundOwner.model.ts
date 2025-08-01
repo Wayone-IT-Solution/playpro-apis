@@ -46,8 +46,7 @@ const groundSchema = new Schema<IGround>(
         default: "Point",
       },
       coordinates: {
-        type: [Number], // [longitude, latitude]
-        required: true,
+        type: [Number], // [longitude,
       },
     },
     pricePerHour: {

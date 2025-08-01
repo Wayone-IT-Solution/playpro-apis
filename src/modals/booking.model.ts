@@ -11,6 +11,8 @@ export interface IBooking extends Document {
   status: "pending" | "confirmed" | "completed" | "rescheduled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentId?: string;
+  createdAt: Date;
+  updatedAt: Date;
   notes: Record<string, any>; // empty object by default
   emergencyContact: {
     name: string;
@@ -110,7 +112,11 @@ const bookingSchema = new Schema<IBooking>(
       default: {},
     },
   },
-  { timestamps: true }
+  { timestamps: {
+     createdAt : "createdAt",
+      updatedAt: "updatedAt",
+  }
+   }
 );
 
 export const Booking = mongoose.model<IBooking>("Booking", bookingSchema);

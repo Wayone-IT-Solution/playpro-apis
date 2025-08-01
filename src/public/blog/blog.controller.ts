@@ -3,6 +3,7 @@ import { Blog } from "../../modals/blog.model";
 import ApiError from "../../utils/ApiError";
 import ApiResponse from "../../utils/ApiResponse";
 import { CommonService } from "../../services/common.services";
+import { extractImageUrl } from "../../admin/banner/banner.controller";
 
 const blogService = new CommonService(Blog);
 
@@ -13,7 +14,16 @@ export const createBlog = async (
   next: NextFunction
 ) => {
   try {
-    const blog = await Blog.create(req.body);
+    const imageUrl = req?.body?.imageUrl?.[0]?.url;
+    if (!imageUrl)
+      return res
+        .status(403)
+        .json(new ApiError(403, "Blog imageUrl is Required."));
+    const blog = await Blog.create({
+      ...req.body,
+      imageUrl,
+      isActive: req.body.isActive === "active",
+    });
     return res
       .status(201)
       .json(new ApiResponse(201, blog, "Blog created successfully"));
@@ -79,8 +89,24 @@ export const updateBlog = async (
   next: NextFunction
 ) => {
   try {
-    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+    const id = req.params.id;
+    const imageUrl = req?.body?.imageUrl?.[0]?.url;
+    const record = await blogService.getById(id);
+    if (!record) {
+      return res.status(404).json(new ApiError(404, "Blog not found."));
+    }
+
+    let image;
+    if (req?.body?.image && record.imageUrl)
+      image = await extractImageUrl(
+        req?.body?.image,
+        record.imageUrl as string
+      );
+
+    const blog = await blogService.updateById(req.params.id, {
+      ...req.body,
+      isActive: req.body.isActive === "active",
+      image: image || imageUrl,
     });
     if (!blog) throw new ApiError(404, "Blog not found");
     return res

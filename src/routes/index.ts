@@ -19,11 +19,12 @@ import booking from "../public/booking/booking.route"
 import review from "../public/review/review.route";
 import category from "../public/category/category.route";
 import blog from "../public/blog/blog.route";
-import testimonial from "../public/testimonial/testimonial.routes"
+import testimonial from "../public/testimonial/testimonial.routes";
+import revenue from "../dashboard/router/revenue.route";
 // Create main router
 const router = Router();
 
-// Admin routes
+// Admin routes/
 router.use("/admin", adminRoutes);
 
 // Banner routes
@@ -40,6 +41,7 @@ router.use("/review",review);
 router.use("/category",category);
 router.use("/blog",blog);
 router.use("/testimonial",testimonial);
+router.use("/revenue",revenue);
 
 
 export default router;
