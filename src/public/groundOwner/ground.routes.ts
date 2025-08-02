@@ -15,14 +15,28 @@ router.post(
   dynamicUpload([{ name: "images", maxCount: 5 }]),
   s3UploaderMiddleware("ground"),
   asyncHandler(GroundController.createGround)
-); // Add ground
+);
+router.post(
+  "/admin",
+  authenticateToken,
+  dynamicUpload([{ name: "images", maxCount: 5 }]),
+  s3UploaderMiddleware("ground"),
+  asyncHandler(GroundController.createGroundByAdmin)
+);
 router.put(
   "/:id",
   authenticateToken,
   dynamicUpload([{ name: "images", maxCount: 5 }]),
   s3UploaderMiddleware("ground"),
   asyncHandler(GroundController.updateGround)
-); // Update ground
+);
+router.put(
+  "/admin/:id",
+  authenticateToken,
+  dynamicUpload([{ name: "images", maxCount: 5 }]),
+  s3UploaderMiddleware("ground"),
+  asyncHandler(GroundController.updateGroundByAdmin)
+);
 router.get(
   "/search",
   authenticateToken,

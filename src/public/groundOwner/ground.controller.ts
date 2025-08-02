@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
-import { Ground } from "../../modals/groundOwner.model";
 import ApiError from "../../utils/ApiError";
-import { deleteFromS3 } from "../../config/s3Uploader";
-import { CommonService } from "../../services/common.services";
 import ApiResponse from "../../utils/ApiResponse";
+import { deleteFromS3 } from "../../config/s3Uploader";
+import { Ground } from "../../modals/groundOwner.model";
+import { Request, Response, NextFunction } from "express";
+import { CommonService } from "../../services/common.services";
 
 const groundService = new CommonService(Ground);
 
@@ -25,7 +25,35 @@ export class GroundController {
         userId: user.id,
       });
 
-      return res.status(201).json({ message: "Ground created", data: ground });
+      return res
+        .status(201)
+        .json({ success: true, message: "Ground created", data: ground });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async createGroundByAdmin(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const newImages = req?.body?.images?.map((item: any) => item?.url) || [];
+      const ground = await Ground.create({
+        ...req.body,
+        images: newImages,
+        location: {
+          type: "Point",
+          coordinates: [
+            parseFloat(req.body.latitude),
+            parseFloat(req.body.longitude),
+          ],
+        },
+      });
+      return res
+        .status(201)
+        .json(new ApiResponse(201, ground, "Ground Listed Successfully!"));
     } catch (err) {
       next(err);
     }
@@ -52,7 +80,41 @@ export class GroundController {
       Object.assign(ground, req.body);
       await ground.save();
 
-      return res.status(200).json({ message: "Ground updated", data: ground });
+      return res
+        .status(200)
+        .json({ success: true, message: "Ground updated", data: ground });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async updateGroundByAdmin(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { id } = req.params;
+      let images = req?.body?.images;
+      if (images?.length > 0) {
+        images = req?.body?.images?.map((item: any) => item?.url);
+      }
+      const ground = await Ground.findById(id);
+      if (!ground) return next(new ApiError(404, "Ground not found"));
+      const existingImages = ground?.images;
+      req.body.images = [...existingImages, ...images];
+      (req.body.location = {
+        type: "Point",
+        coordinates: [
+          parseFloat(req.body.latitude),
+          parseFloat(req.body.longitude),
+        ],
+      }),
+        Object.assign(ground, req.body);
+      await ground.save();
+      return res
+        .status(200)
+        .json({ success: true, message: "Ground updated", data: ground });
     } catch (err) {
       next(err);
     }
@@ -91,7 +153,7 @@ export class GroundController {
 
   static async getGroundById(req: Request, res: Response, next: NextFunction) {
     try {
-      const ground = await groundService.getById(req.params.id);
+      const ground = await groundService.getById(req.params.id, false);
       if (!ground) return next(new ApiError(404, "Ground not found"));
       res
         .status(200)
