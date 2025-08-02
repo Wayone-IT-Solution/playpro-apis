@@ -2,6 +2,7 @@ import express from "express";
 import {
   createBooking,
   getAllBookings,
+  getAllTransactions,
   getBookingById,
   rescheduleBooking,
   updateBooking,
@@ -13,16 +14,17 @@ const router = express.Router();
 
 // Create a booking
 router.post("/", authenticateToken, asyncHandler(createBooking));
-
-// // Get all bookings
-router.get("/:status?", authenticateToken, asyncHandler(getAllBookings));
-
-// // Get booking by ID
-router.get("/:id", authenticateToken, asyncHandler(getBookingById));
-
 // Update booking by ID
 router.put("/", authenticateToken, asyncHandler(updateBooking));
 router.put("/reschedule", authenticateToken, asyncHandler(rescheduleBooking));
+// In your route file
+router.get(
+  "/transactions/:status?",
+  authenticateToken,
+  asyncHandler(getAllTransactions)
+);
+router.get("/:status?", authenticateToken, asyncHandler(getAllBookings));
+router.get("/:id", authenticateToken, asyncHandler(getBookingById));
 
 // // Delete booking by ID
 // router.delete("/:id", authenticateToken, asyncHandler(deleteBooking));

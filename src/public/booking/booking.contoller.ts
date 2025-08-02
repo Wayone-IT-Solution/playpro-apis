@@ -262,6 +262,15 @@ export const getAllBookings = async (
       },
       { $unwind: "$groundData" },
       {
+        $lookup: {
+          from: "users",
+          localField: "groundData.userId",
+          foreignField: "_id",
+          as: "groundOwnerDetails",
+        },
+      },
+      { $unwind: "$groundOwnerDetails" },
+      {
         $project: {
           _id: 1,
           totalAmount: 1,
@@ -279,6 +288,15 @@ export const getAllBookings = async (
           groundName: "$groundData.name",
           groundAddress: "$groundData.address",
           groundLocation: "$groundData.location",
+          groundOwnerName: {
+            $concat: [
+              "$groundOwnerDetails.firstName",
+              " ",
+              "$groundOwnerDetails.lastName",
+            ],
+          },
+          groundOwnerEmail: "$groundOwnerDetails.email",
+          groundOwnerMobile: "$groundOwnerDetails.phoneNumber",
         },
       },
     ];
@@ -422,5 +440,86 @@ export const rescheduleBooking = async (
   } catch (err) {
     console.error("❌ Error in rescheduleBooking:", err);
     next(err);
+  }
+};
+export const getAllTransactions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { status } = req.params;
+    const filter: any = {};
+    if (status) filter.paymentStatus = status;
+
+    const pipeline = [
+      {
+        $match: filter,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $lookup: {
+          from: "grounds",
+          localField: "groundId",
+          foreignField: "_id",
+          as: "ground",
+        },
+      },
+      { $unwind: "$ground" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ground.userId",
+          foreignField: "_id",
+          as: "groundOwnerDetails",
+        },
+      },
+      { $unwind: "$groundOwnerDetails" },
+      {
+        $project: {
+          _id: 1,
+          paymentStatus: 1,
+          status: 1,
+          totalAmount: 1,
+          finalAmount: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          userName: {
+            $concat: ["$user.firstName", " ", "$user.lastName"],
+          },
+          userEmail: "$user.email",
+          groundName: "$ground.name",
+          groundLocation: "$ground.location",
+          paymentDetails: 1,
+          groundOwnerName: {
+            $concat: [
+              "$groundOwnerDetails.firstName",
+              " ",
+              "$groundOwnerDetails.lastName",
+            ],
+          },
+          groundOwnerEmail: "$groundOwnerDetails.email",
+          groundOwnerMobile: "$groundOwnerDetails.phoneNumber",
+        },
+      },
+    ];
+
+    const transactions = await bookingService.getAll(req.query, pipeline);
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, transactions, "Transactions fetched successfully")
+      );
+  } catch (error: any) {
+    console.error("❌ Error in getAllTransactions:", error);
+    next(new ApiError(500, error?.message || "Failed to fetch transactions"));
   }
 };
