@@ -4,6 +4,7 @@ import { deleteFromS3 } from "../../config/s3Uploader";
 import { Ground } from "../../modals/groundOwner.model";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
+import { Slot } from "../../modals/slot.model";
 
 const groundService = new CommonService(Ground);
 
@@ -122,8 +123,21 @@ export class GroundController {
 
   static async searchGrounds(req: Request, res: Response, next: NextFunction) {
     try {
-      const { minPrice, maxPrice, lat, lng } = req.query;
-      const filter: any = {};
+      const {
+        minPrice,
+        maxPrice,
+        lat,
+        lng,
+        name,
+        address,
+        facilities,
+        page = 1,
+        limit = 10,
+      } = req.query;
+
+      const filter: any = {
+        status: "active",
+      };
 
       if (minPrice && maxPrice) {
         filter.pricePerHour = {
@@ -134,18 +148,41 @@ export class GroundController {
 
       if (lat && lng) {
         filter.location = {
-          $near: {
-            $geometry: {
-              type: "Point",
-              coordinates: [Number(lng), Number(lat)],
-            },
-            $maxDistance: 10000,
+          $geoWithin: {
+            $centerSphere: [[Number(lng), Number(lat)], 10 / 6378.1],
           },
         };
       }
 
-      const grounds = await Ground.find(filter);
-      res.status(200).json({ data: grounds });
+      if (name) {
+        filter.name = { $regex: name as string, $options: "i" };
+      }
+
+      if (address) {
+        filter.address = { $regex: address as string, $options: "i" };
+      }
+
+      if (facilities) {
+        const facilitiesArray = Array.isArray(facilities)
+          ? facilities
+          : (facilities as string).split(",");
+        filter.facilities = { $all: facilitiesArray };
+      }
+
+      const totalCount = await Ground.countDocuments(filter);
+
+      const skip = (Number(page) - 1) * Number(limit);
+      const grounds = await Ground.find(filter).skip(skip).limit(Number(limit));
+
+      res.status(200).json({
+        result: grounds,
+        pagination: {
+          currentPage: Number(page),
+          itemsPerPage: Number(limit),
+          totalItems: totalCount,
+          totalPages: Math.ceil(totalCount / Number(limit)),
+        },
+      });
     } catch (err) {
       next(err);
     }
@@ -211,6 +248,59 @@ export class GroundController {
       return res
         .status(200)
         .json(new ApiResponse(200, grounds, "Data fetched successfully"));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getGroundFilters(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const statusFilter = { status: "active" };
+
+      const names = await Ground.distinct("name", statusFilter);
+
+      const addresses = await Ground.distinct("address", statusFilter);
+      
+      const facilities = await Ground.distinct("facilities", statusFilter);
+
+      const priceStats = await Ground.aggregate([
+        { $match: statusFilter },
+        {
+          $group: {
+            _id: null,
+            minPrice: { $min: "$pricePerHour" },
+            maxPrice: { $max: "$pricePerHour" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            minPrice: 1,
+            maxPrice: 1,
+          },
+        },
+      ]);
+
+      const { minPrice = 0, maxPrice = 0 } = priceStats[0] || {};
+
+      // ✅ Return response
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          {
+            names,
+            addresses,
+            facilities,
+            minPrice,
+            maxPrice,
+          },
+          "Filter data fetched successfully"
+        )
+      );
     } catch (err) {
       next(err);
     }

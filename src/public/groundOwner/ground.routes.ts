@@ -52,6 +52,7 @@ router.get(
   authenticateToken,
   asyncHandler(GroundController.getAllGrounds)
 );
+router.get("/filter", asyncHandler(GroundController.getGroundFilters));
 router.get("/:id", asyncHandler(GroundController.getGroundById));
 router.delete(
   "/image",

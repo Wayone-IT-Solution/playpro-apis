@@ -300,11 +300,7 @@ export const getAllBookings = async (
         },
       },
     ];
-    const { status } = req.params;
-    const bookings = await bookingService.getAll(
-      { ...req.query, status },
-      pipeline
-    );
+    const bookings = await bookingService.getAll(req.query, pipeline);
     return res.status(200).json({
       success: true,
       message: "All bookings fetched successfully",
@@ -448,14 +444,7 @@ export const getAllTransactions = async (
   next: NextFunction
 ) => {
   try {
-    const { status } = req.params;
-    const filter: any = {};
-    if (status) filter.paymentStatus = status;
-
     const pipeline = [
-      {
-        $match: filter,
-      },
       {
         $lookup: {
           from: "users",

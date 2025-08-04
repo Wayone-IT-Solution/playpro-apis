@@ -29,6 +29,7 @@ const userRouter = Router();
 userRouter.post("/", asyncHandler(registerUser));
 userRouter.post("/login", asyncHandler(loginUser));
 userRouter.get("/:userType", authenticateToken, asyncHandler(getAllUsers));
+userRouter.get("/:userType/:id", authenticateToken, asyncHandler(getUserById));
 userRouter.post("/send-otp", asyncHandler(generateOtp));
 userRouter.post("/verify-otp", asyncHandler(verifyOtp));
 userRouter.put("/", authenticateToken, isUser, asyncHandler(updateUser));

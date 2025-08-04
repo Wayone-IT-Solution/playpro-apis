@@ -19,11 +19,16 @@ router.put("/", authenticateToken, asyncHandler(updateBooking));
 router.put("/reschedule", authenticateToken, asyncHandler(rescheduleBooking));
 // In your route file
 router.get(
-  "/transactions/:status?",
+  "/transactions",
   authenticateToken,
   asyncHandler(getAllTransactions)
 );
-router.get("/:status?", authenticateToken, asyncHandler(getAllBookings));
+router.get(
+  "/transactions/:id",
+  authenticateToken,
+  asyncHandler(getBookingById)
+);
+router.get("/", authenticateToken, asyncHandler(getAllBookings));
 router.get("/:id", authenticateToken, asyncHandler(getBookingById));
 
 // // Delete booking by ID
