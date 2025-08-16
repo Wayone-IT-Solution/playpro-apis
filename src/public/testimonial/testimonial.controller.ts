@@ -61,6 +61,23 @@ export const getAllTestimonials = async (
     next(err);
   }
 };
+export const getAllPublicTestimonials = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const result = await testimonialService.getAll({
+      ...req.query,
+      isActive: true,
+    });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result, "Testimonials fetched successfully"));
+  } catch (err) {
+    next(err);
+  }
+};
 
 // ✅ Get testimonial by ID
 export const getTestimonialById = async (

@@ -5,6 +5,7 @@ import {
   getTestimonialById,
   updateTestimonial,
   deleteTestimonial,
+  getAllPublicTestimonials,
 } from "../testimonial/testimonial.controller";
 import { authenticateToken, isAdmin } from "../../middlewares/authMiddleware";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -24,6 +25,7 @@ router.post(
   asyncHandler(createTestimonial)
 );
 router.get("/", asyncHandler(getAllTestimonials));
+router.get("/public", asyncHandler(getAllPublicTestimonials))
 router.get(
   "/:id",
   authenticateToken,

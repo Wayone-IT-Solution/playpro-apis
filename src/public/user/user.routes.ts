@@ -36,7 +36,7 @@ userRouter.put("/", authenticateToken, isUser, asyncHandler(updateUser));
 userRouter.put(
   "/profile",
   authenticateToken,
-  isUser,
+  // isUser,
   dynamicUpload([{ name: "profilePicture", maxCount: 1 }]),
   s3UploaderMiddleware("profile"),
   asyncHandler(uploadProfilePicture)

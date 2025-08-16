@@ -21,6 +21,7 @@ import category from "../public/category/category.route";
 import blog from "../public/blog/blog.route";
 import testimonial from "../public/testimonial/testimonial.routes";
 import revenue from "../dashboard/router/revenue.route";
+import contact from "../public/contactUs/contactUs.router"
 // Create main router
 const router = Router();
 
@@ -42,6 +43,7 @@ router.use("/category",category);
 router.use("/blog",blog);
 router.use("/testimonial",testimonial);
 router.use("/revenue",revenue);
+router.use("/contact", contact);
 
 
 export default router;

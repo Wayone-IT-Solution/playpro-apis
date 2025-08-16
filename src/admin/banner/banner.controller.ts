@@ -46,6 +46,21 @@ export class BannerController {
 
   static async getAllBanners(req: Request, res: Response, next: NextFunction) {
     try {
+      const result = await BannerService.getAll(req.query);
+      return res
+        .status(200)
+        .json(new ApiResponse(200, result, "Data fetched successfully"));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getAllPublicBanners(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
       const result = await BannerService.getAll({
         ...req.query,
         isActive: true,

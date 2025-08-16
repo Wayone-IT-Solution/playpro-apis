@@ -199,7 +199,24 @@ export class GroundController {
       next(err);
     }
   }
-
+  static async getGroundDetailsById(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const ground = await Ground.findOne({
+        _id: req.params.id,
+        status: "active",
+      });
+      if (!ground) return next(new ApiError(404, "Ground not found"));
+      res
+        .status(200)
+        .json(new ApiResponse(200, ground, "Data fetched successfully!"));
+    } catch (err) {
+      next(err);
+    }
+  }
   static async getMyGrounds(req: Request, res: Response, next: NextFunction) {
     try {
       const user = (req as any).user;
@@ -253,6 +270,23 @@ export class GroundController {
     }
   }
 
+  static async getAllPublicGround(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const result = await groundService.getAll({
+        ...req.query,
+        status: "active",
+      });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, result, "Grounds fetched successfully"));
+    } catch (err) {
+      next(err);
+    }
+  }
   static async getGroundFilters(
     req: Request,
     res: Response,
@@ -264,7 +298,7 @@ export class GroundController {
       const names = await Ground.distinct("name", statusFilter);
 
       const addresses = await Ground.distinct("address", statusFilter);
-      
+
       const facilities = await Ground.distinct("facilities", statusFilter);
 
       const priceStats = await Ground.aggregate([

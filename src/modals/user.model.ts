@@ -53,20 +53,10 @@ const userSchema = new Schema<IUser>(
     },
     phoneNumber: {
       type: String,
-      required: true,
       unique: true,
-      validate: {
-        validator: (val: string) => /^[6-9]\d{9}$/.test(val),
-        message: "Invalid Indian mobile number",
-      },
     },
     dateOfBirth: {
       type: Date,
-      required: true,
-      validate: {
-        validator: (date: Date) => date < new Date(),
-        message: "Date of birth must be in the past",
-      },
     },
     profilePicture: {
       type: String,
