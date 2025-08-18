@@ -112,6 +112,8 @@ export class GroundController {
         ],
       }),
         Object.assign(ground, req.body);
+      delete req.body.latitude;
+      delete req.body.longitude;
       await ground.save();
       return res
         .status(200)
@@ -190,15 +192,21 @@ export class GroundController {
 
   static async getGroundById(req: Request, res: Response, next: NextFunction) {
     try {
-      const ground = await groundService.getById(req.params.id, false);
+      const ground: any = await groundService.getById(req.params.id, false);
       if (!ground) return next(new ApiError(404, "Ground not found"));
-      res
+      const data = {
+        ...ground.toJSON(),
+        latitude: ground.location.coordinates[0],
+        longitude: ground.location.coordinates[1]
+      }
+      return res
         .status(200)
-        .json(new ApiResponse(200, ground, "Data fetched successfully!"));
+        .json(new ApiResponse(200, data, "Data fetched successfully!"));
     } catch (err) {
       next(err);
     }
   }
+
   static async getGroundDetailsById(
     req: Request,
     res: Response,
@@ -249,15 +257,16 @@ export class GroundController {
             _id: 1,
             name: 1,
             status: 1,
+            images: 1,
             address: 1,
             updatedAt: 1,
             createdAt: 1,
-            pricePerHour: 1,
             description: 1,
+            pricePerHour: 1,
             email: "$userData.email",
             lastName: "$userData.lastName",
-            firstName: "$userData.firstName",
             mobile: "$userData.phoneNumber",
+            firstName: "$userData.firstName",
           },
         },
       ];

@@ -50,7 +50,7 @@ router.get(
 router.get(
   "/",
   authenticateToken,
-  asyncHandler(GroundController.getAllPublicGround)
+  asyncHandler(GroundController.getAllGrounds)
 );
 router.get("/public", asyncHandler(GroundController.getAllPublicGround));
 
