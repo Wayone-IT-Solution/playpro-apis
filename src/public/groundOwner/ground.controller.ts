@@ -4,7 +4,6 @@ import { deleteFromS3 } from "../../config/s3Uploader";
 import { Ground } from "../../modals/groundOwner.model";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
-import { Slot } from "../../modals/slot.model";
 
 const groundService = new CommonService(Ground);
 
@@ -97,22 +96,33 @@ export class GroundController {
     try {
       const { id } = req.params;
       let images = req?.body?.images;
-      if (images?.length > 0) {
-        images = req?.body?.images?.map((item: any) => item?.url);
-      }
+
+      // Normalize images (string URLs + object URLs)
+      if (Array.isArray(images) && images.length > 0) {
+        images = images.map((item: any) =>
+          typeof item === "string" ? item : item?.url
+        );
+      } else images = [];
+
       const ground = await Ground.findById(id);
       if (!ground) return next(new ApiError(404, "Ground not found"));
-      const existingImages = ground?.images;
-      req.body.images = [...existingImages, ...images];
-      (req.body.location = {
-        type: "Point",
-        coordinates: [
-          parseFloat(req.body.latitude),
-          parseFloat(req.body.longitude),
-        ],
-      }),
-        Object.assign(ground, req.body);
+
+      req.body.images = images;
+      if (req.body.latitude && req.body.longitude) {
+        req.body.location = {
+          type: "Point",
+          coordinates: [
+            parseFloat(req.body.latitude),
+            parseFloat(req.body.longitude),
+          ],
+        };
+        delete req.body.latitude;
+        delete req.body.longitude;
+      }
+
+      Object.assign(ground, req.body);
       await ground.save();
+
       return res
         .status(200)
         .json({ success: true, message: "Ground updated", data: ground });
@@ -190,15 +200,21 @@ export class GroundController {
 
   static async getGroundById(req: Request, res: Response, next: NextFunction) {
     try {
-      const ground = await groundService.getById(req.params.id, false);
+      const ground: any = await groundService.getById(req.params.id, false);
       if (!ground) return next(new ApiError(404, "Ground not found"));
-      res
+      const data = {
+        ...ground.toJSON(),
+        latitude: ground.location.coordinates[0],
+        longitude: ground.location.coordinates[1]
+      }
+      return res
         .status(200)
-        .json(new ApiResponse(200, ground, "Data fetched successfully!"));
+        .json(new ApiResponse(200, data, "Data fetched successfully!"));
     } catch (err) {
       next(err);
     }
   }
+
   static async getGroundDetailsById(
     req: Request,
     res: Response,
@@ -249,15 +265,16 @@ export class GroundController {
             _id: 1,
             name: 1,
             status: 1,
+            images: 1,
             address: 1,
             updatedAt: 1,
             createdAt: 1,
-            pricePerHour: 1,
             description: 1,
+            pricePerHour: 1,
             email: "$userData.email",
             lastName: "$userData.lastName",
-            firstName: "$userData.firstName",
             mobile: "$userData.phoneNumber",
+            firstName: "$userData.firstName",
           },
         },
       ];
@@ -343,19 +360,10 @@ export class GroundController {
   static async deleteImage(req: Request, res: Response, next: NextFunction) {
     try {
       const { groundId, key } = req.body;
-      const user = (req as any).user;
-
       const ground = await Ground.findById(groundId);
       if (!ground)
         return res.status(404).json(new ApiError(404, "Ground not found"));
 
-      if (ground.userId.toString() !== user.id.toString()) {
-        return res
-          .status(403)
-          .json(
-            new ApiError(403, "Not authorized to delete image from this ground")
-          );
-      }
       const imageIndex = ground.images.findIndex((img: string) =>
         img.includes(key)
       );
