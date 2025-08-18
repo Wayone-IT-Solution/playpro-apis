@@ -166,6 +166,7 @@ export const updateUser = async (
       upiId,
       dateOfBirth,
       fcmToken,
+      phoneNumber,
       businessDetail,
       contactDetail,
     } = req.body;
@@ -176,9 +177,11 @@ export const updateUser = async (
     if (lastName) updatedFields.lastName = lastName;
     if (firstName) updatedFields.firstName = firstName;
     if (dateOfBirth) updatedFields.dateOfBirth = dateOfBirth;
+    if (phoneNumber) updatedFields.phoneNumber = phoneNumber;
     if (businessDetail) updatedFields.businessDetail = businessDetail;
     if (contactDetail) updatedFields.contactDetail = contactDetail;
 
+    console.log(req.body);
     const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, {
       new: true,
       runValidators: true,
@@ -301,7 +304,7 @@ export const uploadProfilePicture = async (
     const userId = (req as any).user.id;
     const profilePicture = req?.body?.profilePicture?.[0]?.url;
 
-    if (!profilePicture) throw new ApiError(400, "No file uploaded");
+    // if (!profilePicture) throw new ApiError(400, "No file uploaded");
 
     const record = await userService.getById(userId);
     if (!record) throw new ApiError(404, "User not found.");

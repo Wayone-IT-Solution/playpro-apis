@@ -32,7 +32,7 @@ userRouter.get("/:userType", authenticateToken, asyncHandler(getAllUsers));
 userRouter.get("/:userType/:id", authenticateToken, asyncHandler(getUserById));
 userRouter.post("/send-otp", asyncHandler(generateOtp));
 userRouter.post("/verify-otp", asyncHandler(verifyOtp));
-userRouter.put("/", authenticateToken, isUser, asyncHandler(updateUser));
+userRouter.put("/", authenticateToken, asyncHandler(updateUser));
 userRouter.put(
   "/profile",
   authenticateToken,
@@ -41,7 +41,7 @@ userRouter.put(
   s3UploaderMiddleware("profile"),
   asyncHandler(uploadProfilePicture)
 );
-userRouter.get("/", authenticateToken, isUser, asyncHandler(getCurrentUser));
+userRouter.get("/", authenticateToken, asyncHandler(getCurrentUser));
 
 // ✅ Admin Routes
 userRouter.get("/otp/all", authenticateToken, asyncHandler(getAllOtps));
