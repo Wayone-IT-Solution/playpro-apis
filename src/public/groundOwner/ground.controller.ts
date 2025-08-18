@@ -4,7 +4,6 @@ import { deleteFromS3 } from "../../config/s3Uploader";
 import { Ground } from "../../modals/groundOwner.model";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
-import { Slot } from "../../modals/slot.model";
 
 const groundService = new CommonService(Ground);
 
@@ -97,24 +96,33 @@ export class GroundController {
     try {
       const { id } = req.params;
       let images = req?.body?.images;
-      if (images?.length > 0) {
-        images = req?.body?.images?.map((item: any) => item?.url);
-      }
+
+      // Normalize images (string URLs + object URLs)
+      if (Array.isArray(images) && images.length > 0) {
+        images = images.map((item: any) =>
+          typeof item === "string" ? item : item?.url
+        );
+      } else images = [];
+
       const ground = await Ground.findById(id);
       if (!ground) return next(new ApiError(404, "Ground not found"));
-      const existingImages = ground?.images;
-      req.body.images = [...existingImages, ...images];
-      (req.body.location = {
-        type: "Point",
-        coordinates: [
-          parseFloat(req.body.latitude),
-          parseFloat(req.body.longitude),
-        ],
-      }),
-        Object.assign(ground, req.body);
-      delete req.body.latitude;
-      delete req.body.longitude;
+
+      req.body.images = images;
+      if (req.body.latitude && req.body.longitude) {
+        req.body.location = {
+          type: "Point",
+          coordinates: [
+            parseFloat(req.body.latitude),
+            parseFloat(req.body.longitude),
+          ],
+        };
+        delete req.body.latitude;
+        delete req.body.longitude;
+      }
+
+      Object.assign(ground, req.body);
       await ground.save();
+
       return res
         .status(200)
         .json({ success: true, message: "Ground updated", data: ground });
@@ -352,19 +360,10 @@ export class GroundController {
   static async deleteImage(req: Request, res: Response, next: NextFunction) {
     try {
       const { groundId, key } = req.body;
-      const user = (req as any).user;
-
       const ground = await Ground.findById(groundId);
       if (!ground)
         return res.status(404).json(new ApiError(404, "Ground not found"));
 
-      if (ground.userId.toString() !== user.id.toString()) {
-        return res
-          .status(403)
-          .json(
-            new ApiError(403, "Not authorized to delete image from this ground")
-          );
-      }
       const imageIndex = ground.images.findIndex((img: string) =>
         img.includes(key)
       );
