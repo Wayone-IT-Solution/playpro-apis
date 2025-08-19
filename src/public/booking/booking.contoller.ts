@@ -21,8 +21,8 @@ export const createBooking = async (
     const {
       groundId,
       slots = [],
-      numberOfGuests,
-      emergencyContact = {},
+      numberOfGuests=2,
+      // emergencyContact = {},
     } = req.body;
 
     // 🔒 Validate required fields
@@ -116,7 +116,7 @@ export const createBooking = async (
       groundId,
       totalAmount,
       numberOfGuests,
-      emergencyContact,
+      // emergencyContact,
       finalAmount: totalAmount,
     });
 

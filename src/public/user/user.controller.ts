@@ -37,7 +37,7 @@ export const registerUser = async (
     } = req.body;
 
     const existingUser = await User.findOne({
-      $or: [{ email }, { phoneNumber }],
+      email,
     });
 
     if (existingUser)
