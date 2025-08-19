@@ -287,6 +287,37 @@ export class GroundController {
     }
   }
 
+  static async getAllAdminGrounds(req: Request, res: Response, next: NextFunction) {
+    try {
+      const pipeline = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userData",
+          },
+        },
+        { $unwind: "$userData" },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            email: "$userData.email",
+            lastName: "$userData.lastName",
+            firstName: "$userData.firstName",
+          },
+        },
+      ];
+      const grounds = await groundService.getAll(req.query, pipeline);
+      return res
+        .status(200)
+        .json(new ApiResponse(200, grounds, "Data fetched successfully"));
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getAllPublicGround(
     req: Request,
     res: Response,

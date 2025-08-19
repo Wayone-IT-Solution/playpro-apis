@@ -3,16 +3,15 @@ import { Request, Response } from "express";
 import ApiError from "../../utils/ApiError";
 import { addDays, startOfDay } from "date-fns";
 import ApiResponse from "../../utils/ApiResponse";
-import { Slot, TimeSlot } from "../../modals/slot.model";
 import { Ground } from "../../modals/groundOwner.model";
+import { Slot, TimeSlot } from "../../modals/slot.model";
 
 export const createSlots = async (request: Request, response: Response) => {
-  const { dates, timeslots, groundId } = request.body;
-
-  if (!dates || !groundId || !timeslots) {
+  const { slots } = request.body;
+  if (!slots) {
     return response.status(400).json(new ApiError(400, "All fields are required"));
   }
-
+  const groundId = slots[0].groundId;
   const groundExists = await Ground.findById(groundId);
   if (!groundExists) {
     return response.status(400).json(new ApiError(400, "Ground doesn't exist!"));
@@ -20,20 +19,18 @@ export const createSlots = async (request: Request, response: Response) => {
 
   const timeslotsArray: any = [];
 
-  dates.forEach((date: any) => {
-    timeslots.forEach((slot: any) => {
-      timeslotsArray.push(
-        new TimeSlot({
-          date,
-          bookedBy: null,
-          isBooked: false,
-          endTime: slot.endTime,
-          startTime: slot.startTime,
-        })
-      );
-    });
+  slots.forEach((slot: any) => {
+    timeslotsArray.push(
+      new TimeSlot({
+        bookedBy: null,
+        isBooked: false,
+        date: slot.slotDate,
+        endTime: slot.endTime,
+        duration: slot.duration,
+        startTime: slot.startTime,
+      })
+    );
   });
-
   let savedSlots;
   const groundSlotExist = await Slot.findOne({ groundId });
   if (groundSlotExist) {
@@ -49,7 +46,6 @@ export const createSlots = async (request: Request, response: Response) => {
     const slot = new Slot(slotDocument);
     savedSlots = await slot.save();
   }
-
   return response.status(200).json(new ApiResponse(200, savedSlots, "Slots created successfully"));
 };
 
@@ -157,31 +153,46 @@ export const addMoreSlots = async (request: Request, response: Response) => {
 export const getSlotsByDate = async (request: Request, response: Response) => {
   const { groundId, date }: any = request.query;
 
-  if (!groundId || !date) {
-    return response.status(400).json(new ApiError(400, "Ground ID and date are required"));
+  if (!groundId) {
+    return response
+      .status(400)
+      .json(new ApiError(400, "Ground ID is required"));
   }
 
   try {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    let slotsForDay: any[] = [];
+    let query: any = { groundId };
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const slot = await Slot.findOne({
-      groundId,
-      "timeslots.date": { $gte: startOfDay, $lt: endOfDay },
-    });
-
-    if (!slot) {
-      return response.status(404).json(new ApiError(404, "No slots found"));
+      query["timeslots.date"] = { $gte: startOfDay, $lt: endOfDay };
     }
 
-    const slotsForDay = slot.timeslots.filter(
-      (ts) => ts.date >= startOfDay && ts.date < endOfDay
-    );
+    const slot = await Slot.findOne(query);
 
-    return response.status(200).json(new ApiResponse(200, slotsForDay, "Slots retrieved successfully"));
+    if (!slot) {
+      return response
+        .status(404)
+        .json(new ApiError(404, "No slots found"));
+    }
+
+    if (date) {
+      slotsForDay = slot.timeslots.filter(
+        (ts: any) => ts.date >= new Date(date).setHours(0, 0, 0, 0) &&
+          ts.date < new Date(date).setHours(23, 59, 59, 999)
+      );
+    } else {
+      slotsForDay = slot.timeslots;
+    }
+    return response
+      .status(200)
+      .json(new ApiResponse(200, slotsForDay, "Slots retrieved successfully"));
   } catch (error: any) {
-    return response.status(500).json(new ApiError(500, "Internal server error"));
+    return response
+      .status(500)
+      .json(new ApiError(500, "Internal server error"));
   }
 };

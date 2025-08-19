@@ -21,6 +21,7 @@ export const getPipeline = (
     postedBy,
     assignee,
     userType,
+    groundId,
     createdBy,
     paymentStatus,
     startDate,
@@ -52,8 +53,9 @@ export const getPipeline = (
   if (user) match.user = safeObjectId(user);
   if (userId) match.userId = safeObjectId(userId);
   if (postedBy) match.postedBy = safeObjectId(postedBy);
-  if (paymentStatus) match.paymentStatus = paymentStatus;
   if (assignee) match.assignee = safeObjectId(assignee);
+  if (groundId) match.groundId = safeObjectId(groundId);
+  if (paymentStatus) match.paymentStatus = paymentStatus;
   if (createdBy) match.createdBy = safeObjectId(createdBy);
   if (community) match.community = safeObjectId(community);
   if (countryId) match.countryId = safeObjectId(countryId);

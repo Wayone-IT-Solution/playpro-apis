@@ -52,6 +52,11 @@ router.get(
   authenticateToken,
   asyncHandler(GroundController.getAllGrounds)
 );
+router.get(
+  "/admin",
+  authenticateToken,
+  asyncHandler(GroundController.getAllAdminGrounds)
+);
 router.get("/public", asyncHandler(GroundController.getAllPublicGround));
 
 router.get("/filter", asyncHandler(GroundController.getGroundFilters));
