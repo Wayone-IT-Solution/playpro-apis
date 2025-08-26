@@ -8,7 +8,7 @@ export interface IProduct extends Document {
   brand: Types.ObjectId;
   category: Types.ObjectId;
   subCategory?: Types.ObjectId;
-  images?: string[];
+  image?: string;
   features: Record<string, any>;
   isActive: boolean;
   createdAt: Date;
@@ -27,7 +27,8 @@ const productSchema: Schema<IProduct> = new Schema(
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
     subCategory: { type: Schema.Types.ObjectId, ref: "Category", default: null },
 
-    images: [{ type: String }],
+    // images: [{ type: String }],
+    image : {type: String, required: true},
 
    
     features: { type: Schema.Types.Mixed, default: {} },

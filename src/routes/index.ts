@@ -24,7 +24,9 @@ import revenue from "../dashboard/router/revenue.route";
 import contact from "../public/contactUs/contactUs.router"
 import productCategory from "../public/productCategory/productCategory.route"
 import brand from "../public/brand/brand.routes";
-// import product from "../public/product/product.route"
+import product from "../public/product/product.route"
+import cart from "../public/cart/cart.route";
+import order from "../public/order/order.route"
 // Create main router
 const router = Router();
 
@@ -49,6 +51,8 @@ router.use("/revenue",revenue);
 router.use("/contact", contact);
 router.use("/product-category", productCategory);
 router.use("/brand",brand);
-// router.use("/product",product);
+router.use("/product",product);
+router.use("/cart",cart);
+router.use("/order",order)
 
 export default router;
