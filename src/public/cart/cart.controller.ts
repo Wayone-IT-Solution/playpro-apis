@@ -4,6 +4,9 @@ import ApiResponse from "../../utils/ApiResponse";
 import { Cart } from "../../modals/cart.model";
 import { Product } from "../../modals/product.modal";
 import mongoose from "mongoose";
+import { CommonService } from "../../services/common.services";
+
+const cartService = new CommonService(Cart);
 
 /**
  * 🛒 Add product to cart
@@ -19,12 +22,11 @@ export const addToCart = async (req: Request, res: Response) => {
   const product = await Product.findById(productId);
   if (!product) throw new ApiError(404, "Product not found");
 
-  // ✅ always use `user` field instead of `userId`
   let cart = await Cart.findOne({ user: userId });
 
   if (!cart) {
     cart = new Cart({
-      user: userId, // ✅ correct field name
+      user: userId,
       items: [],
       totalAmount: 0,
       finalAmount: 0,
@@ -38,9 +40,9 @@ export const addToCart = async (req: Request, res: Response) => {
 
   if (existingItemIndex > -1) {
     if (quantity === 0) {
-      cart.items.splice(existingItemIndex, 1); // remove if 0
+      cart.items.splice(existingItemIndex, 1);
     } else {
-      cart.items[existingItemIndex].quantity = quantity; // update qty
+      cart.items[existingItemIndex].quantity = quantity;
     }
   } else {
     if (quantity > 0) {
@@ -67,10 +69,7 @@ export const getCart = async (req: Request, res: Response) => {
 
     const cart = await Cart.aggregate([
       { $match: { user: userId } },
-
       { $unwind: "$items" },
-
-      // join products
       {
         $lookup: {
           from: "products",
@@ -80,8 +79,6 @@ export const getCart = async (req: Request, res: Response) => {
         },
       },
       { $unwind: "$product" },
-
-      // join brand
       {
         $lookup: {
           from: "brands",
@@ -91,8 +88,6 @@ export const getCart = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
-
-      // join category
       {
         $lookup: {
           from: "categories",
@@ -102,8 +97,6 @@ export const getCart = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-
-      // join subCategory
       {
         $lookup: {
           from: "subcategories",
@@ -113,8 +106,6 @@ export const getCart = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$subCategory", preserveNullAndEmptyArrays: true } },
-
-      // prepare items object
       {
         $project: {
           _id: 0,
@@ -134,8 +125,6 @@ export const getCart = async (req: Request, res: Response) => {
           },
         },
       },
-
-      // group back to single cart with items array
       {
         $group: {
           _id: "$cartId",
@@ -144,8 +133,6 @@ export const getCart = async (req: Request, res: Response) => {
           items: { $push: "$item" },
         },
       },
-
-      // final shape
       {
         $project: {
           _id: 0,
@@ -161,6 +148,100 @@ export const getCart = async (req: Request, res: Response) => {
       .json(new ApiResponse(200, cart?.[0], "Cart Fetched Successfully!"));
   } catch (error: any) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * 🛒 Admin: Get all carts (paginated)
+ */
+export const getAllCartsForAdmin = async (req: Request, res: Response) => {
+  try {
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      { $unwind: "$userDetails" },
+      { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "items.product",
+        },
+      },
+      { $unwind: "$items.product" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "items.product.category",
+          foreignField: "_id",
+          as: "items.product.category",
+        },
+      },
+      {
+        $unwind: {
+          path: "$items.product.category",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "subcategories",
+          localField: "items.product.subCategory",
+          foreignField: "_id",
+          as: "items.product.subCategory",
+        },
+      },
+      {
+        $unwind: {
+          path: "$items.product.subCategory",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "brands",
+          localField: "items.product.brand",
+          foreignField: "_id",
+          as: "items.product.brand",
+        },
+      },
+      {
+        $unwind: {
+          path: "$items.product.brand",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          user: { $first: "$userDetails" },
+          totalAmount: { $first: "$totalAmount" },
+          finalAmount: { $first: "$finalAmount" },
+          metaDetail: { $first: "$metaDetail" },
+          createdAt: { $first: "$createdAt" },
+          updatedAt: { $first: "$updatedAt" },
+          items: { $push: "$items" },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+    ];
+
+    const carts = await cartService.getAll(req.query, pipeline);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, carts, "All carts fetched successfully"));
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json(new ApiResponse(500, {}, err.message || "Failed to fetch carts"));
   }
 };
 
@@ -205,7 +286,7 @@ export const updateQuantity = async (req: Request, res: Response) => {
   if (itemIndex === -1) throw new ApiError(404, "Product not in cart");
 
   if (quantity === 0) {
-    cart.items.splice(itemIndex, 1); // remove if 0
+    cart.items.splice(itemIndex, 1);
   } else {
     cart.items[itemIndex].quantity = quantity;
   }
@@ -245,13 +326,11 @@ export const clearCart = async (req: Request, res: Response) => {
  */
 export const calculateTotal = async (cart: any) => {
   let total = 0;
-
   for (const item of cart.items) {
     const product = await Product.findById(item.product);
     if (product) {
       total += product.price * item.quantity;
     }
   }
-
   return total;
 };

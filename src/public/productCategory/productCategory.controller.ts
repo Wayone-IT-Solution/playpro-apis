@@ -1,6 +1,61 @@
 import { Request, Response, NextFunction } from "express";
-import { getPipeline, paginationResult } from "../../utils/helper";
-import Category, { ICategory, CategoryStatus } from "../../modals/productCategory.model";
+import { paginationResult } from "../../utils/helper";
+import Category, {
+  ICategory,
+  CategoryStatus,
+} from "../../modals/productCategory.model";
+
+const getPipeline = (query: Record<string, any>) => {
+  const {
+    type,
+    status,
+    endDate,
+    page = 1,
+    startDate,
+    searchkey,
+    limit = 10,
+    search = "",
+    sortdir = "desc",
+    sortkey = "createdAt",
+  } = query;
+
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const pipeline: any[] = [];
+  const matchStage: Record<string, any> = {};
+
+  if (type) matchStage.type = type;
+  if (search && searchkey)
+    matchStage[searchkey] = { $regex: search, $options: "i" };
+  if (status) matchStage.status = status;
+
+  if (startDate || endDate) {
+    matchStage.createdAt = {};
+    if (startDate) matchStage.createdAt.$gte = new Date(startDate);
+    if (endDate) matchStage.createdAt.$lte = new Date(endDate);
+  }
+
+  if (Object.keys(matchStage).length > 0) pipeline.push({ $match: matchStage });
+
+  const sortStage = {
+    $sort: { [sortkey]: sortdir === "asc" ? 1 : -1 },
+  };
+  pipeline.push(sortStage);
+
+  // Pagination logic
+  pipeline.push({ $skip: (pageNumber - 1) * limitNumber });
+  pipeline.push({ $limit: limitNumber });
+
+  const options = {
+    collation: {
+      locale: "en",
+      strength: 2, // Case-insensitive collation
+    },
+  };
+
+  return { pipeline, matchStage, options };
+};
 
 export class CategoryController {
   /**
@@ -114,8 +169,8 @@ export class CategoryController {
           _id: 1,
           name: 1,
           status: 1,
-          isParent: 1,
           createdAt: 1,
+          updatedAt: 1,
           description: 1,
           parentCategory: 1,
           parentCategoryDetails: {
@@ -128,13 +183,6 @@ export class CategoryController {
       const totalCategories = await Category.countDocuments(
         Object.keys(matchStage).length > 0 ? matchStage : {}
       );
-
-      if (!categories || categories.length === 0) {
-        res
-          .status(404)
-          .json({ success: false, message: "No categories found" });
-        return;
-      }
 
       const response = paginationResult(
         pageNumber,

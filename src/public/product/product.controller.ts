@@ -46,7 +46,62 @@ export class ProductController {
   // Get all products
   static async getAllProducts(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await ProductService.getAll(req.query);
+      const pipeline: any[] = [
+        {
+          $lookup: {
+            from: "categories",
+            localField: "category",
+            foreignField: "_id",
+            as: "categoryData",
+          },
+        },
+        {
+          $unwind: { path: "$categoryData", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "subCategory",
+            foreignField: "_id",
+            as: "subCategoryData",
+          },
+        },
+        {
+          $unwind: {
+            path: "$subCategoryData",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "brands",
+            localField: "brand",
+            foreignField: "_id",
+            as: "brandData",
+          },
+        },
+        {
+          $unwind: { path: "$brandData", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            image: 1,
+            description: 1,
+            isActive: 1,
+            price: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            category: "$categoryData.name",
+            subCategory: "$subCategoryData.name",
+            brand: "$brandData.name",
+          },
+        },
+      ];
+
+      const result = await ProductService.getAll(req.query, pipeline);
+
       return res
         .status(200)
         .json(new ApiResponse(200, result, "Data fetched successfully"));
@@ -77,7 +132,7 @@ export class ProductController {
   // Get product by ID
   static async getProductById(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await ProductService.getById(req.params.id);
+      const result = await ProductService.getById(req.params.id, false);
       if (!result)
         return res.status(404).json(new ApiError(404, "Product not found"));
       return res

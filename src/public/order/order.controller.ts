@@ -300,3 +300,31 @@ export const getAllOrders = async (req: Request, res: Response) => {
       .json(new ApiError(error.statusCode || 500, error.message));
   }
 };
+export const getAllOrdersForAdmin = async (req: Request, res: Response) => {
+  try {
+    // Define pipeline for aggregation
+    const pipeline = [
+      // join user details
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      { $unwind: "$userDetails" },
+     
+    ];
+
+    const response = await orderService.getAll(req.query, pipeline);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, response, "All orders fetched successfully"));
+  } catch (error: any) {
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiError(error.statusCode || 500, error.message));
+  }
+};

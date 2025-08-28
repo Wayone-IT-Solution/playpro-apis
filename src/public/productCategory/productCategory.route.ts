@@ -5,6 +5,13 @@ import { CategoryController } from "../../public/productCategory/productCategory
 const router = Router();
 
 /**
+ * @route   GET /api/category/
+ * @desc    Retrieve all categories (regardless of status)
+ * @access  Admin (Authenticated)
+ */
+router.get("/", authenticateToken, CategoryController.getAllCategories);
+
+/**
  * ===========================
  * 🔓 PUBLIC ROUTE
  * ===========================
@@ -33,13 +40,6 @@ router.get("/parent/:parentId", CategoryController.getCategoriesByParentId);
  * @access  Admin (Authenticated)
  */
 router.post("/", authenticateToken, CategoryController.createCategory);
-
-/**
- * @route   GET /api/category/
- * @desc    Retrieve all categories (regardless of status)
- * @access  Admin (Authenticated)
- */
-router.get("/", authenticateToken, CategoryController.getAllCategories);
 
 /**
  * @route   GET /api/category/:id

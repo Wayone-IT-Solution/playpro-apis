@@ -18,20 +18,24 @@ router.get("/:id", asyncHandler(BrandController.getBrandById));
 router.post(
   "/",
   authenticateToken,
-  dynamicUpload([{ name: "images", maxCount: 1 }]),
-  s3UploaderMiddleware("brand"), 
+  dynamicUpload([{ name: "imageUrl", maxCount: 1 }]),
+  s3UploaderMiddleware("brand"),
   asyncHandler(BrandController.createBrand)
 );
 
 router.put(
   "/:id",
   authenticateToken,
-  dynamicUpload([{ name: "images", maxCount: 1 }]),
+  dynamicUpload([{ name: "imageUrl", maxCount: 1 }]),
   s3UploaderMiddleware("brand"),
   asyncHandler(BrandController.updateBrand)
 );
 
-router.delete("/:id", authenticateToken, asyncHandler(BrandController.deleteBrand));
+router.delete(
+  "/:id",
+  authenticateToken,
+  asyncHandler(BrandController.deleteBrand)
+);
 router.get("/", authenticateToken, asyncHandler(BrandController.getAllBrands));
 
 export default router;

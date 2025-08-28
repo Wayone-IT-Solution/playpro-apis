@@ -22,7 +22,7 @@ router.post(
 
 // Get all products (admin)
 router.get(
-  "/all",
+  "/",
   authenticateToken,
   asyncHandler(ProductController.getAllProducts)
 );

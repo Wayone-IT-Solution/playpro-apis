@@ -5,8 +5,9 @@ import {
   updateQuantity,
   removeCartItem,
   calculateTotal,
+  getAllCartsForAdmin,
 } from "../cart/cart.controller";
-import { authenticateToken } from "../../middlewares/authMiddleware";
+import { authenticateToken, isAdmin } from "../../middlewares/authMiddleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 
 const router = Router();
@@ -16,5 +17,6 @@ router.post("/", authenticateToken, asyncHandler(addToCart));
 router.get("/", authenticateToken, asyncHandler(getCart));
 router.put("/:productId", authenticateToken, asyncHandler(updateQuantity));
 router.delete("/:productId", authenticateToken, asyncHandler(removeCartItem));
+router.get("/admin",authenticateToken,isAdmin,asyncHandler(getAllCartsForAdmin));
 
 export default router;
