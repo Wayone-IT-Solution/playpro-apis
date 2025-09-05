@@ -205,8 +205,8 @@ export class GroundController {
       const data = {
         ...ground.toJSON(),
         latitude: ground.location.coordinates[0],
-        longitude: ground.location.coordinates[1]
-      }
+        longitude: ground.location.coordinates[1],
+      };
       return res
         .status(200)
         .json(new ApiResponse(200, data, "Data fetched successfully!"));
@@ -223,7 +223,7 @@ export class GroundController {
     try {
       const ground = await Ground.findOne({
         _id: req.params.id,
-        status: "active",
+        status: "Active",
       });
       if (!ground) return next(new ApiError(404, "Ground not found"));
       res
@@ -266,6 +266,7 @@ export class GroundController {
             name: 1,
             status: 1,
             images: 1,
+            type: 1,
             address: 1,
             updatedAt: 1,
             createdAt: 1,
@@ -287,7 +288,11 @@ export class GroundController {
     }
   }
 
-  static async getAllAdminGrounds(req: Request, res: Response, next: NextFunction) {
+  static async getAllAdminGrounds(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const pipeline = [
         {
@@ -341,12 +346,11 @@ export class GroundController {
     next: NextFunction
   ) {
     try {
-      const statusFilter = { status: "active" };
+      const statusFilter = { status: "Active" };
 
       const names = await Ground.distinct("name", statusFilter);
-
+      const types = await Ground.distinct("type", statusFilter);
       const addresses = await Ground.distinct("address", statusFilter);
-
       const facilities = await Ground.distinct("facilities", statusFilter);
 
       const priceStats = await Ground.aggregate([
@@ -369,12 +373,12 @@ export class GroundController {
 
       const { minPrice = 0, maxPrice = 0 } = priceStats[0] || {};
 
-      // ✅ Return response
       return res.status(200).json(
         new ApiResponse(
           200,
           {
             names,
+            types,
             addresses,
             facilities,
             minPrice,
@@ -383,6 +387,40 @@ export class GroundController {
           "Filter data fetched successfully"
         )
       );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async filterGrounds(req: Request, res: Response, next: NextFunction) {
+    try {
+      const statusFilter = { status: "Active" };
+      const { name, type, address, facility, minPrice, maxPrice } = req.query;
+
+      const filter: any = { ...statusFilter };
+
+      if (name) filter.name = { $regex: name, $options: "i" };
+      if (address) filter.address = { $regex: address, $options: "i" };
+      if (facility) filter.facilities = { $regex: facility, $options: "i" };
+      if (type) filter.type = { $regex: type, $options: "i" };
+
+      if (minPrice || maxPrice) {
+        filter.pricePerHour = {};
+        if (minPrice) filter.pricePerHour.$gte = Number(minPrice);
+        if (maxPrice) filter.pricePerHour.$lte = Number(maxPrice);
+      }
+
+      const grounds = await Ground.find(filter).exec();
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            grounds,
+            "Grounds fetched successfully based on filters"
+          )
+        );
     } catch (err) {
       next(err);
     }
@@ -409,6 +447,43 @@ export class GroundController {
       await deleteFromS3(key);
 
       return res.status(200).json({ message: "Image deleted successfully" });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getGroundCountByType(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const result = await Ground.aggregate([
+        { $match: { status: "Active" } },
+        {
+          $group: {
+            _id: "$type",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            type: "$_id",
+            count: 1,
+          },
+        },
+      ]);
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            result,
+            "Ground count by type fetched successfully"
+          )
+        );
     } catch (err) {
       next(err);
     }

@@ -37,7 +37,7 @@ router.get("/:id", asyncHandler(ProductController.getProductById));
 router.put(
   "/:id",
   authenticateToken,
-  dynamicUpload([{ name: "image", maxCount: 1 }]), // 👈 allow update with single image
+  dynamicUpload([{ name: "image", maxCount: 1 }]),
   s3UploaderMiddleware("product"),
   asyncHandler(ProductController.updateProductById)
 );

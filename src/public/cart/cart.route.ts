@@ -15,8 +15,13 @@ const router = Router();
 // 🛒 Cart routes wrapped with asyncHandler
 router.post("/", authenticateToken, asyncHandler(addToCart));
 router.get("/", authenticateToken, asyncHandler(getCart));
-router.put("/:productId", authenticateToken, asyncHandler(updateQuantity));
+router.put("/", authenticateToken, asyncHandler(updateQuantity));
 router.delete("/:productId", authenticateToken, asyncHandler(removeCartItem));
-router.get("/admin",authenticateToken,isAdmin,asyncHandler(getAllCartsForAdmin));
+router.get(
+  "/admin",
+  authenticateToken,
+  isAdmin,
+  asyncHandler(getAllCartsForAdmin)
+);
 
 export default router;

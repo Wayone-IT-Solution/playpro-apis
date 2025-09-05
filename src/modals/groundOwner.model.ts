@@ -4,6 +4,7 @@ export interface IGround extends Document {
   userId: mongoose.Schema.Types.ObjectId;
   name: string;
   status: string;
+  type: string;
   address: string;
   description?: string;
   location: {
@@ -25,6 +26,9 @@ const groundSchema = new Schema<IGround>(
     name: {
       type: String,
       required: true,
+    },
+    type: {
+      type: String,
     },
     status: {
       type: String,

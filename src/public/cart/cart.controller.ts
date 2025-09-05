@@ -66,6 +66,7 @@ export const addToCart = async (req: Request, res: Response) => {
 export const getCart = async (req: Request, res: Response) => {
   try {
     const userId = new mongoose.Types.ObjectId((req as any).user.id);
+    // console.log((req as any).user.id);
 
     const cart = await Cart.aggregate([
       { $match: { user: userId } },
@@ -142,7 +143,7 @@ export const getCart = async (req: Request, res: Response) => {
         },
       },
     ]);
-
+    //  console.log(cart);
     res
       .status(200)
       .json(new ApiResponse(200, cart?.[0], "Cart Fetched Successfully!"));
@@ -274,8 +275,7 @@ export const removeCartItem = async (req: Request, res: Response) => {
  */
 export const updateQuantity = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
-  const { productId } = req.params;
-  const { quantity } = req.body;
+  const { quantity, productId } = req.body;
 
   const cart = await Cart.findOne({ user: userId });
   if (!cart) throw new ApiError(404, "Cart not found");
