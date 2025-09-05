@@ -324,11 +324,8 @@ export const getAllOrdersForAdmin = async (req: Request, res: Response) => {
         },
       },
       { $unwind: "$userDetails" },
-
     ];
-
     const response = await orderService.getAll(req.query, pipeline);
-
     return res
       .status(200)
       .json(new ApiResponse(200, response, "All orders fetched successfully"));
