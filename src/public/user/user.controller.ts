@@ -157,22 +157,25 @@ export const updateUser = async (
   next: NextFunction
 ) => {
   try {
+    const id = req.params.id;
     const userId = req.user?.id;
     if (!userId) throw new ApiError(401, "Unauthorized");
 
     const {
-      firstName,
-      lastName,
       upiId,
-      dateOfBirth,
+      status,
       fcmToken,
+      lastName,
+      firstName,
       phoneNumber,
-      businessDetail,
+      dateOfBirth,
       contactDetail,
+      businessDetail,
     } = req.body;
 
     const updatedFields: any = {};
     if (upiId) updatedFields.upiId = upiId;
+    if (id && status) updatedFields.status = status;
     if (fcmToken) updatedFields.fcmToken = fcmToken;
     if (lastName) updatedFields.lastName = lastName;
     if (firstName) updatedFields.firstName = firstName;
@@ -181,7 +184,6 @@ export const updateUser = async (
     if (businessDetail) updatedFields.businessDetail = businessDetail;
     if (contactDetail) updatedFields.contactDetail = contactDetail;
 
-    console.log(req.body);
     const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, {
       new: true,
       runValidators: true,

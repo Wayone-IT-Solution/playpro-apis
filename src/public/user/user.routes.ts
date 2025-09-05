@@ -42,6 +42,7 @@ userRouter.put(
   asyncHandler(uploadProfilePicture)
 );
 userRouter.get("/", authenticateToken, asyncHandler(getCurrentUser));
+userRouter.put("/:userType/:id", authenticateToken, asyncHandler(updateUser));
 
 // ✅ Admin Routes
 userRouter.get("/otp/all", authenticateToken, asyncHandler(getAllOtps));
