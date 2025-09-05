@@ -1,28 +1,23 @@
 import Admin from "../../modals/admin.model";
-import { config } from "../../config/config";
-import jwt, { SignOptions } from "jsonwebtoken";
 import ApiResponse from "../../utils/ApiResponse";
+import { generateAccessToken } from "../../utils/token";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
 
-const secret = config.jwt.secret;
 const adminService = new CommonService(Admin);
-const expiresIn = config.jwt.expiresIn as SignOptions["expiresIn"];
 
-/**
- * User Controller
- */
 export class AdminController {
   /**
    * Create a new user
    */
   static async createAdmin(req: Request, res: Response, next: NextFunction) {
     try {
-      const { username, email, password, status } = req.body;
+      const { username, email, password, role, status } = req.body;
       const user = await AdminController.createUser({
+        role,
         email,
-        password,
         username,
+        password,
         status: status === "active",
       });
       res
@@ -66,10 +61,10 @@ export class AdminController {
   ): Promise<any> {
     try {
       const { id } = req.params;
-      const { username, password, status } = req.body;
+      const { username, role, status } = req.body;
       const updatedUser = await Admin.findByIdAndUpdate(
         id,
-        { username, password, status: status === "active" },
+        { username, role, status: status === "active" },
         { new: true, runValidators: true }
       );
 
@@ -95,10 +90,30 @@ export class AdminController {
     next: NextFunction
   ): Promise<any> {
     try {
-      const result = await adminService.getAll(req.query);
+      const pipeline = [{
+        $lookup: {
+          from: "roles",
+          localField: "role",
+          foreignField: "_id",
+          as: "roleData",
+        },
+      },
+      { $unwind: "$roleData" },
+      {
+        $project: {
+          _id: 1,
+          email: 1,
+          status: 1,
+          username: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          role: "$roleData.name",
+        },
+      }];
+      const result = await adminService.getAll(req.query, pipeline);
       return res
         .status(200)
-        .json(new ApiResponse(200, result, "Data fetched successfully"));
+        .json(new ApiResponse(200, result, "Employees fetched successfully"));
     } catch (error) {
       next(error);
     }
@@ -115,9 +130,10 @@ export class AdminController {
         message: "Login successful",
         token: data.token, // Send the token in response
         user: {
-          _id: data?.user?._id,
-          email: data?.user?.email,
-          username: data?.user?.username,
+          _id: data.user._id,
+          role: data?.user.role,
+          email: data.user.email,
+          username: data.user.username,
         },
       });
     } catch (error) {
@@ -138,7 +154,7 @@ export class AdminController {
   ): Promise<void> {
     try {
       const userId = (req as any).user.id; // Extracted from the decoded JWT token
-      const user: any = await AdminController.getUserById(userId);
+      const user = await AdminController.getUserById(userId);
 
       if (!user) {
         res.status(404).json({ message: "User not found" });
@@ -150,8 +166,9 @@ export class AdminController {
         message: "User details fetched successfully",
         user: {
           _id: user._id,
+          role: user.role,
           email: user.email,
-          username: user?.username,
+          username: user.username,
         },
       });
     } catch (error) {
@@ -162,7 +179,7 @@ export class AdminController {
    * Get user details by user ID
    */
   static async getUserById(userId: string) {
-    const user = await Admin.findById({ _id: userId, status: true });
+    const user = await Admin.findById({ _id: userId, status: true }).populate("role");
     return user;
   }
 
@@ -170,12 +187,13 @@ export class AdminController {
    * Create a new user
    */
   static async createUser(userData: {
-    email: string;
-    status: boolean;
     username: string;
+    email: string;
     password: string;
+    role: string;
+    status: boolean;
   }) {
-    const { username, email, password, status } = userData;
+    const { username, email, password, role, status } = userData;
 
     const existingUser = await Admin.findOne({
       $or: [{ email }, { username }],
@@ -183,7 +201,7 @@ export class AdminController {
     if (existingUser)
       throw new Error("User with this email or username already exists");
 
-    const user = new Admin({ username, email, password, status });
+    const user = new Admin({ username, email, password, role, status });
     return await user.save();
   }
 
@@ -193,26 +211,24 @@ export class AdminController {
   static async loginUser(loginData: { email: string; password: string }) {
     const { email, password } = loginData;
 
-    const user: any = await Admin.findOne({ email });
+    const user: any = await Admin.findOne({ email }).populate("role");
     if (!user) throw new Error("User not found with this email");
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) throw new Error("Password is incorrect");
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      secret,
-      { expiresIn }
-    );
+    const payload = {
+      email: user.email,
+      id: user._id as string,
+      role: (user?.role?.name as any) ?? "admin",
+    };
+    const accessToken = generateAccessToken(payload);
+    await user.save();
 
     return {
+      user,
+      token: accessToken,
       message: "Login successful",
-      token,
-      user: {
-        _id: user._id,
-        email: user.email,
-        username: user.username,
-      },
     };
   }
 }
