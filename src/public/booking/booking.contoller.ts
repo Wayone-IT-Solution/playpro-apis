@@ -324,9 +324,9 @@ export const getBookingUser = async (
     }
 
     const bookings = await Booking.find({ userId })
-      .populate("groundId", "name address location pricePerHour")
+      .populate("groundId", "name address location pricePerHour images")
       .populate("slots")
-      .sort({ createdAt: -1 }); 
+      .sort({ createdAt: -1 });
 
     return res
       .status(200)

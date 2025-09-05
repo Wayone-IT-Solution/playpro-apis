@@ -253,6 +253,19 @@ export const getMyOrders = async (req: Request, res: Response) => {
   }
 };
 
+export const getOrderById = async (req: Request, res: Response) => {
+  try {
+    const result = await orderService.getById(req.params.id);
+    if (!result)
+      return res.status(404).json(new ApiError(404, "banner not found"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result, "Data fetched successfully"));
+  } catch (err: any) {
+    return res.status(500).json(new ApiError(500, err.message));
+  }
+}
+
 export const getAllOrders = async (req: Request, res: Response) => {
   try {
     const pipeline = [
