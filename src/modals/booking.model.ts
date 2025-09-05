@@ -14,11 +14,11 @@ export interface IBooking extends Document {
   createdAt: Date;
   updatedAt: Date;
   notes: Record<string, any>; // empty object by default
-  emergencyContact: {
-    name: string;
-    phoneNumber: string;
-    email: string;
-  };
+  // emergencyContact: {
+  //   name: string;
+  //   phoneNumber: string;
+  //   email: string;
+  // };
   paymentDetails: Record<string, any>;
   meta?: Record<string, any>;
 }
@@ -86,37 +86,38 @@ const bookingSchema = new Schema<IBooking>(
       type: Schema.Types.Mixed,
       default: {},
     },
-    emergencyContact: {
-      name: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      phoneNumber: {
-        type: String,
-        required: true,
-        validate: {
-          validator: (val: string) => /^[6-9]\d{9}$/.test(val),
-          message: "Invalid Indian mobile number",
-        },
-      },
-      email: {
-        type: String,
-        required: true,
-        lowercase: true,
-        trim: true,
-      },
-    },
+    // emergencyContact: {
+    //   name: {
+    //     type: String,
+    //     required: true,
+    //     trim: true,
+    //   },
+    //   phoneNumber: {
+    //     type: String,
+    //     required: true,
+    //     validate: {
+    //       validator: (val: string) => /^[6-9]\d{9}$/.test(val),
+    //       message: "Invalid Indian mobile number",
+    //     },
+    //   },
+    //   email: {
+    //     type: String,
+    //     required: true,
+    //     lowercase: true,
+    //     trim: true,
+    //   },
+    // },
     paymentDetails: {
       type: Schema.Types.Mixed,
       default: {},
     },
   },
-  { timestamps: {
-     createdAt : "createdAt",
+  {
+    timestamps: {
+      createdAt: "createdAt",
       updatedAt: "updatedAt",
+    },
   }
-   }
 );
 
 export const Booking = mongoose.model<IBooking>("Booking", bookingSchema);

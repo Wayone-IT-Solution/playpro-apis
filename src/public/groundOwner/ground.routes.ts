@@ -59,8 +59,11 @@ router.get(
 );
 router.get("/public", asyncHandler(GroundController.getAllPublicGround));
 
+router.get("/count", asyncHandler(GroundController.getGroundCountByType));
 router.get("/filter", asyncHandler(GroundController.getGroundFilters));
+router.get("/filterGround", asyncHandler(GroundController.filterGrounds));
 router.get("/public/:id", asyncHandler(GroundController.getGroundDetailsById));
+
 router.get("/:id", asyncHandler(GroundController.getGroundById));
 router.delete(
   "/image",

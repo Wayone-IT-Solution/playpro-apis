@@ -4,6 +4,7 @@ import {
   getAllBookings,
   getAllTransactions,
   getBookingById,
+  getBookingUser,
   rescheduleBooking,
   updateBooking,
 } from "../../public/booking/booking.contoller";
@@ -11,6 +12,13 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { authenticateToken } from "../../middlewares/authMiddleware";
 
 const router = express.Router();
+
+
+router.get(
+  "/users",
+  authenticateToken,
+  asyncHandler(getBookingUser)
+);
 
 // Create a booking
 router.post("/", authenticateToken, asyncHandler(createBooking));

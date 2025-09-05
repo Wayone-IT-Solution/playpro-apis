@@ -53,7 +53,7 @@ const userSchema = new Schema<IUser>(
     },
     phoneNumber: {
       type: String,
-      unique: true,
+      // unique: true,
     },
     dateOfBirth: {
       type: Date,

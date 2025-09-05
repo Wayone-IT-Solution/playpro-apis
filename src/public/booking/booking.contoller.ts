@@ -21,8 +21,8 @@ export const createBooking = async (
     const {
       groundId,
       slots = [],
-      numberOfGuests,
-      emergencyContact = {},
+      numberOfGuests = 2,
+      // emergencyContact = {},
     } = req.body;
 
     // 🔒 Validate required fields
@@ -116,7 +116,7 @@ export const createBooking = async (
       groundId,
       totalAmount,
       numberOfGuests,
-      emergencyContact,
+      // emergencyContact,
       finalAmount: totalAmount,
     });
 
@@ -307,6 +307,34 @@ export const getAllBookings = async (
       data: bookings,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+export const getBookingUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new ApiError(401, "Unauthorized: User not found in token");
+    }
+
+    const bookings = await Booking.find({ userId })
+      .populate("groundId", "name address location pricePerHour")
+      .populate("slots")
+      .sort({ createdAt: -1 }); 
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, bookings, "User bookings fetched successfully")
+      );
+  } catch (error) {
+    console.error("❌ Error in getBookingUser:", error);
     next(error);
   }
 };

@@ -11,8 +11,8 @@ import { authenticateToken } from "../../middlewares/authMiddleware";
 
 const router = Router();
 
-router.get("/", authenticateToken, asyncHandler(getSlotsByDate));
-router.get("/:id", authenticateToken, asyncHandler(getNextDaysSlots));
+router.get("/", asyncHandler(getSlotsByDate));
+router.get("/:id", asyncHandler(getNextDaysSlots));
 router.post("/", authenticateToken, asyncHandler(createSlots));
 router.delete("/", authenticateToken, asyncHandler(deleteSlot));
 router.post("/add", authenticateToken, asyncHandler(addMoreSlots));
