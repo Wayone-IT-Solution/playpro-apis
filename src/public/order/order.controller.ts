@@ -1,9 +1,9 @@
+import mongoose from "mongoose";
+import ApiError from "../../utils/ApiError";
 import { Request, Response } from "express";
 import { Cart } from "../../modals/cart.model";
 import { Order } from "../../modals/order.model";
-import ApiError from "../../utils/ApiError";
 import ApiResponse from "../../utils/ApiResponse";
-import mongoose from "mongoose";
 import { CommonService } from "../../services/common.services";
 
 const orderService = new CommonService(Order);
@@ -139,7 +139,6 @@ export const placeOrder = async (req: Request, res: Response) => {
 export const getMyOrders = async (req: Request, res: Response) => {
   try {
     const userId = new mongoose.Types.ObjectId((req as any).user.id);
-
     const orders = await Order.aggregate([
       { $match: { user: userId } },
 
@@ -241,11 +240,9 @@ export const getMyOrders = async (req: Request, res: Response) => {
 
       { $sort: { createdAt: -1 } },
     ]);
-
     if (!orders || orders.length === 0) {
       throw new ApiError(404, "No orders found");
     }
-
     return res
       .status(200)
       .json(new ApiResponse(200, orders, "My orders fetched successfully"));
@@ -314,7 +311,7 @@ export const getAllOrdersForAdmin = async (req: Request, res: Response) => {
         },
       },
       { $unwind: "$userDetails" },
-     
+
     ];
 
     const response = await orderService.getAll(req.query, pipeline);

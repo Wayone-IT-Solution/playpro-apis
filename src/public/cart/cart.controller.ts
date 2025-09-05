@@ -8,10 +8,7 @@ import { CommonService } from "../../services/common.services";
 
 const cartService = new CommonService(Cart);
 
-/**
- * 🛒 Add product to cart
- */
-export const addToCart = async (req: Request, res: Response) => {
+export const upsertCartItem = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const { productId, quantity } = req.body;
 
@@ -19,11 +16,12 @@ export const addToCart = async (req: Request, res: Response) => {
     throw new ApiError(400, "Product ID and quantity are required");
   }
 
+  // Check if product exists
   const product = await Product.findById(productId);
   if (!product) throw new ApiError(404, "Product not found");
 
+  // Find or create cart
   let cart = await Cart.findOne({ user: userId });
-
   if (!cart) {
     cart = new Cart({
       user: userId,
@@ -34,35 +32,42 @@ export const addToCart = async (req: Request, res: Response) => {
     });
   }
 
-  const existingItemIndex = cart.items.findIndex(
+  // Find item index
+  const itemIndex = cart.items.findIndex(
     (item: any) => item.product.toString() === productId
   );
 
-  if (existingItemIndex > -1) {
+  if (itemIndex > -1) {
+    // Product exists → update or remove
     if (quantity === 0) {
-      cart.items.splice(existingItemIndex, 1);
+      cart.items.splice(itemIndex, 1);
     } else {
-      cart.items[existingItemIndex].quantity = quantity;
+      cart.items[itemIndex].quantity = quantity;
     }
   } else {
+    // Product not in cart → add if quantity > 0
     if (quantity > 0) {
       cart.items.push({ product: productId, quantity });
     }
   }
 
+  // Recalculate totals
   cart.totalAmount = await calculateTotal(cart);
   cart.finalAmount = cart.totalAmount;
 
   await cart.save();
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, cart, "Product added to cart"));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      cart,
+      quantity === 0
+        ? "Product removed from cart"
+        : "Cart updated successfully"
+    )
+  );
 };
 
-/**
- * 🛒 Get user cart
- */
 export const getCart = async (req: Request, res: Response) => {
   try {
     const userId = new mongoose.Types.ObjectId((req as any).user.id);
@@ -152,9 +157,6 @@ export const getCart = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * 🛒 Admin: Get all carts (paginated)
- */
 export const getAllCartsForAdmin = async (req: Request, res: Response) => {
   try {
     const pipeline = [
@@ -246,9 +248,6 @@ export const getAllCartsForAdmin = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * 🛒 Remove product from cart
- */
 export const removeCartItem = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
   const { productId } = req.params;
@@ -270,40 +269,6 @@ export const removeCartItem = async (req: Request, res: Response) => {
     .json(new ApiResponse(200, cart, "Product removed from cart"));
 };
 
-/**
- * 🛒 Update quantity
- */
-export const updateQuantity = async (req: Request, res: Response) => {
-  const userId = (req as any).user.id;
-  const { quantity, productId } = req.body;
-
-  const cart = await Cart.findOne({ user: userId });
-  if (!cart) throw new ApiError(404, "Cart not found");
-
-  const itemIndex = cart.items.findIndex(
-    (i: any) => i.product.toString() === productId
-  );
-  if (itemIndex === -1) throw new ApiError(404, "Product not in cart");
-
-  if (quantity === 0) {
-    cart.items.splice(itemIndex, 1);
-  } else {
-    cart.items[itemIndex].quantity = quantity;
-  }
-
-  cart.totalAmount = await calculateTotal(cart);
-  cart.finalAmount = cart.totalAmount;
-
-  await cart.save();
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, cart, "Cart updated successfully"));
-};
-
-/**
- * 🛒 Clear entire cart
- */
 export const clearCart = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
 
@@ -321,9 +286,6 @@ export const clearCart = async (req: Request, res: Response) => {
     .json(new ApiResponse(200, cart, "Cart cleared successfully"));
 };
 
-/**
- * 🛒 Calculate total (helper)
- */
 export const calculateTotal = async (cart: any) => {
   let total = 0;
   for (const item of cart.items) {
