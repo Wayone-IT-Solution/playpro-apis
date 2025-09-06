@@ -1,13 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
-import { Booking } from "../../modals/booking.model";
-import { Ground } from "../../modals/groundOwner.model";
-import { Slot } from "../../modals/slot.model";
-import ApiError from "../../utils/ApiError";
 import mongoose from "mongoose";
-import ApiResponse from "../../utils/ApiResponse";
-import { CommonService } from "../../services/common.services";
+import ApiError from "../../utils/ApiError";
+import { Slot } from "../../modals/slot.model";
 import { User } from "../../modals/user.model";
+import ApiResponse from "../../utils/ApiResponse";
+import { Ground } from "../../modals/ground.model";
+import { Booking } from "../../modals/booking.model";
+import { Request, Response, NextFunction } from "express";
+import { CommonService } from "../../services/common.services";
+import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
 
 const bookingService = new CommonService(Booking);
 
@@ -31,7 +31,7 @@ export const createBooking = async (
     }
 
     // 📦 Fetch ground
-    const groundData = await Ground.findById({
+    const groundData: any = await Ground.findById({
       _id: groundId,
       status: "active",
     }).lean();

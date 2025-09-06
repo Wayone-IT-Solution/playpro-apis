@@ -83,21 +83,22 @@ export class CategoryController {
   }
 
   /**
-   * 🟢 Get all active categories (Public Route)
-   */
+ * 🟢 Get all active categories (Public Route)
+ */
   static async getActiveCategories(
-    _req: Request,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
-      const categories = await Category.find(
-        {
-          parentCategory: null,
-          status: CategoryStatus.ACTIVE,
-        },
-        { _id: 1, name: 1 }
-      ).sort({ createdAt: -1 });
+      const { parentCategoryId } = req.query;
+      const filter: any = { status: CategoryStatus.ACTIVE };
+      if (parentCategoryId) filter.parentCategory = parentCategoryId;
+      else filter.parentCategory = null;
+
+      const categories = await Category.find(filter, { _id: 1, name: 1 }).sort({
+        createdAt: -1,
+      });
 
       res.status(200).json({
         success: true,

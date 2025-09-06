@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import { Testimonial } from "../../modals/testimonial.model";
 import ApiError from "../../utils/ApiError";
 import ApiResponse from "../../utils/ApiResponse";
-import mongoose from "mongoose";
+import { Request, Response, NextFunction } from "express";
+import { Testimonial } from "../../modals/testimonial.model";
 import { CommonService } from "../../services/common.services";
 import { extractImageUrl } from "../../admin/banner/banner.controller";
 
@@ -30,8 +29,8 @@ export const createTestimonial = async (
       image,
       rating,
       feedback,
-      isVerified: isVerified === "active",
       isActive: isActive === "active",
+      isVerified: isVerified === "active",
     });
 
     return res
@@ -128,8 +127,8 @@ export const updateTestimonial = async (
     const updates = {
       ...req.body,
       image: imageUrl || image,
-      isVerified: isVerified === "active",
       isActive: isActive === "active",
+      isVerified: isVerified === "active",
     };
 
     const testimonial = await Testimonial.findByIdAndUpdate(id, updates, {

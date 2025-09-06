@@ -1,7 +1,7 @@
 import ApiError from "../../utils/ApiError";
 import ApiResponse from "../../utils/ApiResponse";
+import { Ground } from "../../modals/ground.model";
 import { deleteFromS3 } from "../../config/s3Uploader";
-import { Ground } from "../../modals/groundOwner.model";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
 
@@ -64,9 +64,12 @@ export class GroundController {
       const { id } = req.params;
       const user = (req as any).user;
       let images = req?.body?.images;
-      if (images?.length > 0) {
-        images = req?.body?.images?.map((item: any) => item?.url);
-      }
+      // Normalize images (string URLs + object URLs)
+      if (Array.isArray(images) && images.length > 0) {
+        images = images.map((item: any) =>
+          typeof item === "string" ? item : item?.url
+        );
+      } else images = [];
       const ground = await Ground.findById(id);
       if (!ground) return next(new ApiError(404, "Ground not found"));
 
@@ -76,7 +79,10 @@ export class GroundController {
         );
       }
       const existingImages = ground?.images;
-      req.body.images = [...existingImages, ...images];
+      const mergedImages = [...existingImages, ...images].filter(
+        (value, index, self) => self.indexOf(value) === index
+      );
+      req.body.images = mergedImages;
       Object.assign(ground, req.body);
       await ground.save();
 
@@ -103,7 +109,6 @@ export class GroundController {
           typeof item === "string" ? item : item?.url
         );
       } else images = [];
-
       const ground = await Ground.findById(id);
       if (!ground) return next(new ApiError(404, "Ground not found"));
 
@@ -119,7 +124,11 @@ export class GroundController {
         delete req.body.latitude;
         delete req.body.longitude;
       }
-
+      const existingImages = ground?.images;
+      const mergedImages = [...existingImages, ...images].filter(
+        (value, index, self) => self.indexOf(value) === index
+      );
+      req.body.images = mergedImages;
       Object.assign(ground, req.body);
       await ground.save();
 

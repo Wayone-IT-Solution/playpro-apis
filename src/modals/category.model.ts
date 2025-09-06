@@ -1,46 +1,45 @@
 import mongoose, { Schema, Document, model } from "mongoose";
 
+// 🌍 Localized field interface
+export interface ILocalizedField {
+  en: string;
+  ar?: string;
+}
+
 // 1. Define the interface for the BlogCategory document
 export interface IBlogCategory extends Document {
-  name: string;
+  name: ILocalizedField;
   type: string;
-  description?: string;
+  description?: ILocalizedField;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// 2. Define the schema
+// 2. Localized field schema
+const localizedFieldSchema = new Schema<ILocalizedField>(
+  {
+    en: { type: String, required: true, trim: true, maxlength: 50, minlength: 2 },
+    ar: { type: String, trim: true, maxlength: 50, minlength: 2 },
+  },
+  { _id: false }
+);
+
+// 3. Schema definition
 const BlogCategorySchema: Schema<IBlogCategory> = new Schema(
   {
-    name: {
-      type: String,
-      trim: true,
-      required: true,
-      maxlength: 50,
-      minlength: 2,
-    },
-    type: {
-      type: String,
-      required: true,
-      default: "general",
-    },
-    description: {
-      type: String,
-      trim: true,
-      maxlength: 200,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    name: { type: localizedFieldSchema, required: true },
+    type: { type: String, required: true, default: "general" },
+    description: { type: localizedFieldSchema },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
 
-// 3. Compound index to enforce unique name+type combination
-BlogCategorySchema.index({ name: 1, type: 1 }, { unique: true });
+// 4. Compound index to enforce unique name.en + type
+BlogCategorySchema.index({ "name.en": 1, type: 1 }, { unique: true });
 
-// 4. Export the model with type safety
-export const BlogCategory = mongoose.models.BlogCategory as mongoose.Model<IBlogCategory> ||
+// 5. Export model with hot-reload safety
+export const BlogCategory =
+  mongoose.models.BlogCategory as mongoose.Model<IBlogCategory> ||
   model<IBlogCategory>("BlogCategory", BlogCategorySchema);

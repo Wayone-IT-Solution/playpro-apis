@@ -1,67 +1,50 @@
 import slugify from "slugify";
 import mongoose, { Document, Schema, Model, model } from "mongoose";
 
-// 1. Interface for the blog document
-export interface IBlog extends Document {
-  title: string;
-  slug: string;
-  description: string;
-  imageUrl?: string;
-  categoryId?: mongoose.Types.ObjectId;
-  short_description: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+export interface ILocalizedField {
+  en: string;
+  ar: string;
 }
 
-// 2. Schema definition
+export interface IBlog extends Document {
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+  imageUrl?: string;
+  isActive: boolean;
+  title: ILocalizedField;
+  description: ILocalizedField;
+  short_description: ILocalizedField;
+  categoryId?: mongoose.Types.ObjectId;
+}
+
+const localizedFieldSchema = new Schema<ILocalizedField>(
+  {
+    en: { type: String, required: true, trim: true },
+    ar: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 const BlogSchema: Schema<IBlog> = new Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    slug: {
-      type: String,
-      trim: true,
-      unique: true,
-    },
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    imageUrl: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-    categoryId: {
-      type: Schema.Types.ObjectId,
-      ref: "BlogCategory",
-    },
-    short_description: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    isActive: {
-      type: Boolean,
-      default: false,
-    },
+    isActive: { type: Boolean, default: false },
+    slug: { type: String, trim: true, unique: true },
+    imageUrl: { type: String, trim: true, default: "" },
+    title: { type: localizedFieldSchema, required: true },
+    description: { type: localizedFieldSchema, required: true },
+    categoryId: { type: Schema.Types.ObjectId, ref: "BlogCategory" },
+    short_description: { type: localizedFieldSchema, required: true },
   },
   { timestamps: true }
 );
 
-// 3. Pre-save hook for slug generation
 BlogSchema.pre<IBlog>("save", function (next) {
-  if (this.isNew) {
-    this.slug = slugify(this.title, { lower: true, strict: true });
+  if (this.isNew && this.title?.en) {
+    this.slug = slugify(this.title.en, { lower: true, strict: true });
   }
   next();
 });
 
-// 4. Export model with type safety and hot-reload support
 export const Blog: Model<IBlog> =
   mongoose.models.Blog || model<IBlog>("Blog", BlogSchema);

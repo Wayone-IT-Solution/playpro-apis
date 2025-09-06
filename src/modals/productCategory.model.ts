@@ -1,13 +1,21 @@
 import slugify from "slugify";
 import mongoose, { Schema, Document, Types } from "mongoose";
 
+/**
+ * 🌍 Localized field interface
+ */
+export interface ILocalizedField {
+  en: string;
+  ar?: string;
+}
+
 export interface ICategory extends Document {
-  name: string;
+  name: ILocalizedField;
   slug: string;
   createdAt: Date;
   updatedAt: Date;
   isParent: boolean;
-  description?: string;
+  description?: ILocalizedField;
   status: CategoryStatus;
   parentCategory?: Types.ObjectId;
 }
@@ -20,23 +28,25 @@ export enum CategoryStatus {
   INACTIVE = "inactive",
 }
 
+/**
+ * Schema for localized fields
+ */
+const localizedFieldSchema = new Schema<ILocalizedField>(
+  {
+    en: { type: String, required: true, trim: true },
+    ar: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
+/**
+ * Category Schema
+ */
 const CategorySchema: Schema<ICategory> = new Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-      unique: true,
-    },
-    description: {
-      type: String,
-      trim: true,
-    },
-    slug: {
-      type: String,
-      unique: true,
-      index: true,
-    },
+    name: { type: localizedFieldSchema, required: true, unique: false },
+    description: { type: localizedFieldSchema },
+    slug: { type: String, unique: true, index: true },
     status: {
       type: String,
       default: CategoryStatus.INACTIVE,
@@ -56,20 +66,23 @@ const CategorySchema: Schema<ICategory> = new Schema(
         message: "Parent category cannot be a subcategory",
       },
     },
-    isParent: {
-      type: Boolean,
-      default: false,
-    },
+    isParent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-// Middleware to generate slug
+/**
+ * Middleware to generate slug from English name
+ */
 CategorySchema.pre<ICategory>("save", function (next) {
-  if (this.isModified("name")) {
-    this.slug = slugify(this.name, { lower: true, strict: true });
+  if (this.isModified("name.en")) {
+    this.slug = slugify(this.name.en, { lower: true, strict: true });
   }
   next();
 });
 
-export default mongoose.model<ICategory>("Category", CategorySchema);
+/**
+ * Model export with hot-reload safety
+ */
+export default mongoose.models.Category ||
+  mongoose.model<ICategory>("Category", CategorySchema);

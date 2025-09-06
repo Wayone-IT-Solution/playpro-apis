@@ -1,8 +1,8 @@
 import ApiError from "../../utils/ApiError";
 import { User } from "../../modals/user.model";
 import ApiResponse from "../../utils/ApiResponse";
+import { Ground } from "../../modals/ground.model";
 import { Booking } from "../../modals/booking.model";
-import { Ground } from "../../modals/groundOwner.model";
 import { Request, Response, NextFunction } from "express";
 import { formatISO, isValid, parseISO, startOfDay, subDays } from "date-fns";
 

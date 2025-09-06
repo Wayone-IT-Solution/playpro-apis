@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import ApiError from "../../utils/ApiError";
 import { addDays, startOfDay } from "date-fns";
 import ApiResponse from "../../utils/ApiResponse";
-import { Ground } from "../../modals/groundOwner.model";
+import { Ground } from "../../modals/ground.model";
 import { Slot, TimeSlot } from "../../modals/slot.model";
 
 export const createSlots = async (request: Request, response: Response) => {

@@ -18,17 +18,15 @@ export const getPipeline = (
     userId,
     endDate,
     isActive,
-    postedBy,
+    category,
     assignee,
     userType,
     groundId,
     createdBy,
-    paymentStatus,
     startDate,
-    community,
     searchkey,
     countryId,
-    applicantId,
+    paymentStatus,
     page = 1,
     limit = 10,
     search = "",
@@ -52,14 +50,12 @@ export const getPipeline = (
   if (userType) match.userType = userType;
   if (user) match.user = safeObjectId(user);
   if (userId) match.userId = safeObjectId(userId);
-  if (postedBy) match.postedBy = safeObjectId(postedBy);
+  if (category) match.category = safeObjectId(category);
   if (assignee) match.assignee = safeObjectId(assignee);
   if (groundId) match.groundId = safeObjectId(groundId);
   if (paymentStatus) match.paymentStatus = paymentStatus;
   if (createdBy) match.createdBy = safeObjectId(createdBy);
-  if (community) match.community = safeObjectId(community);
   if (countryId) match.countryId = safeObjectId(countryId);
-  if (applicantId) match.applicant = safeObjectId(applicantId);
   if (isActive) match.isActive = { $in: [true, "true", "active", 1] };
 
   if (startDate || endDate) {
