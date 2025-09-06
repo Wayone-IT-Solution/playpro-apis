@@ -28,6 +28,7 @@ const userRouter = Router();
 
 userRouter.post("/", asyncHandler(registerUser));
 userRouter.post("/login", asyncHandler(loginUser));
+userRouter.get("/otp/all", authenticateToken, asyncHandler(getAllOtps));
 userRouter.get("/:userType", authenticateToken, asyncHandler(getAllUsers));
 userRouter.get("/:userType/:id", authenticateToken, asyncHandler(getUserById));
 userRouter.post("/send-otp", asyncHandler(generateOtp));
@@ -43,10 +44,6 @@ userRouter.put(
 );
 userRouter.get("/", authenticateToken, asyncHandler(getCurrentUser));
 userRouter.put("/:userType/:id", authenticateToken, asyncHandler(updateUser));
-
-// ✅ Admin Routes
-userRouter.get("/otp/all", authenticateToken, asyncHandler(getAllOtps));
-
 userRouter.get("/:id", authenticateToken, isAdmin, asyncHandler(getUserById));
 
 export default userRouter;
