@@ -8,6 +8,7 @@ import { Booking } from "../../modals/booking.model";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
 import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
+import { sendBookingEmail } from "../../utils/confirmationService";
 
 const bookingService = new CommonService(Booking);
 
@@ -119,6 +120,20 @@ export const createBooking = async (
       // emergencyContact,
       finalAmount: totalAmount,
     });
+
+    const userData = await User.findById({ _id: userId });
+
+    await sendBookingEmail({
+      to: userData?.email, booking: {
+        _id: booking?.id,
+        status: booking?.status,
+        createdAt: booking?.createdAt,
+        totalAmount: booking?.totalAmount,
+        finalAmount: booking?.finalAmount,
+        paymentStatus: booking?.paymentStatus,
+        numberOfGuests: booking?.numberOfGuests,
+      }, userName: userData?.firstName + " " + userData?.lastName
+    })
 
     return res.status(200).json({
       success: true,
