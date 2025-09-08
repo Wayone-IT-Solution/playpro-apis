@@ -110,14 +110,25 @@ export class ProductController {
     }
   }
 
-  // Get all products
   static async getAllPublicProducts(
     req: Request,
     res: Response,
     next: NextFunction
   ) {
     try {
+      const { name } = req.query;
+
+      const match: any = { isActive: true };
+
+      if (name) {
+        match.$or = [
+          { "name.en": { $regex: name, $options: "i" } },
+          { "name.ar": { $regex: name, $options: "i" } },
+        ];
+      }
+
       const pipeline: any[] = [
+        { $match: match }, // <-- Add the match stage at the very beginning
         {
           $lookup: {
             from: "categories",
@@ -126,9 +137,7 @@ export class ProductController {
             as: "categoryData",
           },
         },
-        {
-          $unwind: { path: "$categoryData", preserveNullAndEmptyArrays: true },
-        },
+        { $unwind: { path: "$categoryData", preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
             from: "categories",
@@ -138,10 +147,7 @@ export class ProductController {
           },
         },
         {
-          $unwind: {
-            path: "$subCategoryData",
-            preserveNullAndEmptyArrays: true,
-          },
+          $unwind: { path: "$subCategoryData", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -151,30 +157,25 @@ export class ProductController {
             as: "brandData",
           },
         },
-        {
-          $unwind: { path: "$brandData", preserveNullAndEmptyArrays: true },
-        },
+        { $unwind: { path: "$brandData", preserveNullAndEmptyArrays: true } },
         {
           $project: {
             _id: 1,
             name: 1,
             image: 1,
-            description: 1,
-            isActive: 1,
             price: 1,
+            isActive: 1,
             createdAt: 1,
             updatedAt: 1,
+            description: 1,
+            brand: "$brandData.name",
             category: "$categoryData.name",
             subCategory: "$subCategoryData.name",
-            brand: "$brandData.name",
           },
         },
       ];
 
-      const result = await ProductService.getAll(
-        { ...req.query, isActive: true },
-        pipeline
-      );
+      const result = await ProductService.getAll({ ...req.query }, pipeline);
 
       return res
         .status(200)

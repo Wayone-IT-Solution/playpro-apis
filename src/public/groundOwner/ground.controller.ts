@@ -359,7 +359,7 @@ export class GroundController {
     next: NextFunction
   ) {
     try {
-      const statusFilter = { status: "Active" };
+      const statusFilter = { status: "active" };
 
       const names = await Ground.distinct("name", statusFilter);
       const types = await Ground.distinct("type", statusFilter);
@@ -407,12 +407,17 @@ export class GroundController {
 
   static async filterGrounds(req: Request, res: Response, next: NextFunction) {
     try {
-      const statusFilter = { status: "Active" };
+      const statusFilter = { status: "active" };
       const { name, type, address, facility, minPrice, maxPrice } = req.query;
 
       const filter: any = { ...statusFilter };
 
-      if (name) filter.name = { $regex: name, $options: "i" };
+      if (name) {
+        filter.$or = [
+          { "name.en": { $regex: name, $options: "i" } },
+          { "name.ar": { $regex: name, $options: "i" } },
+        ];
+      }
       if (address) filter.address = { $regex: address, $options: "i" };
       if (facility) filter.facilities = { $regex: facility, $options: "i" };
       if (type) filter.type = { $regex: type, $options: "i" };
