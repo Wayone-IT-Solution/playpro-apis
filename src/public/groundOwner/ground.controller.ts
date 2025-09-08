@@ -363,7 +363,7 @@ export class GroundController {
 
       const names = await Ground.distinct("name", statusFilter);
       const types = await Ground.distinct("type", statusFilter);
-      const addresses = await Ground.distinct("address", statusFilter);
+      const addresses = await Ground.distinct("city", statusFilter);
       const facilities = await Ground.distinct("facilities", statusFilter);
 
       const priceStats = await Ground.aggregate([
@@ -408,7 +408,7 @@ export class GroundController {
   static async filterGrounds(req: Request, res: Response, next: NextFunction) {
     try {
       const statusFilter = { status: "active" };
-      const { name, type, address, facility, minPrice, maxPrice } = req.query;
+      const { name, type, city, address, facility, minPrice, maxPrice } = req.query;
 
       const filter: any = { ...statusFilter };
 
@@ -418,9 +418,25 @@ export class GroundController {
           { "name.ar": { $regex: name, $options: "i" } },
         ];
       }
-      if (address) filter.address = { $regex: address, $options: "i" };
+      if (city) {
+        filter.$or = [
+          { "city.en": { $regex: city, $options: "i" } },
+          { "city.ar": { $regex: city, $options: "i" } },
+        ];
+      }
+      if (type) {
+        filter.$or = [
+          { "type.en": { $regex: type, $options: "i" } },
+          { "type.ar": { $regex: type, $options: "i" } },
+        ];
+      }
+      if (address) {
+        filter.$or = [
+          { "address.en": { $regex: address, $options: "i" } },
+          { "address.ar": { $regex: address, $options: "i" } },
+        ];
+      }
       if (facility) filter.facilities = { $regex: facility, $options: "i" };
-      if (type) filter.type = { $regex: type, $options: "i" };
 
       if (minPrice || maxPrice) {
         filter.pricePerHour = {};

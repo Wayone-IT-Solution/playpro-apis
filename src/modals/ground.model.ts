@@ -16,6 +16,7 @@ export interface IGround extends Document {
   userId: Types.ObjectId;
   status: "active" | "inactive" | "maintenance";
   type: ILocalizedField;
+  city: ILocalizedField;
   address: ILocalizedField;
   startTime: string; // e.g., "08:00"
   endTime: string;   // e.g., "22:00"
@@ -69,6 +70,10 @@ const groundSchema = new Schema<IGround>(
       enum: ["active", "inactive", "maintenance"],
     },
     address: {
+      type: localizedFieldSchema,
+      required: true,
+    },
+    city: {
       type: localizedFieldSchema,
       required: true,
     },
