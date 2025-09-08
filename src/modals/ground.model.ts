@@ -12,11 +12,14 @@ export interface ILocalizedField {
  * Ground interface
  */
 export interface IGround extends Document {
-  userId: Types.ObjectId;
   name: ILocalizedField;
+  userId: Types.ObjectId;
   status: "active" | "inactive" | "maintenance";
   type: ILocalizedField;
   address: ILocalizedField;
+  startTime: string; // e.g., "08:00"
+  endTime: string;   // e.g., "22:00"
+  pitchType: ILocalizedField;
   description?: ILocalizedField;
   location: {
     type: "Point";
@@ -56,6 +59,10 @@ const groundSchema = new Schema<IGround>(
       type: localizedFieldSchema,
       required: true,
     },
+    pitchType: {
+      type: localizedFieldSchema,
+      required: true,
+    },
     status: {
       type: String,
       default: "active",
@@ -68,6 +75,16 @@ const groundSchema = new Schema<IGround>(
     description: {
       type: localizedFieldSchema,
       default: { en: "" },
+    },
+    startTime: {
+      type: String,
+      required: true,
+      match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, // validates "HH:mm"
+    },
+    endTime: {
+      type: String,
+      required: true,
+      match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
     },
     location: {
       type: {
@@ -102,3 +119,28 @@ groundSchema.index({ location: "2dsphere" });
 
 export const Ground =
   mongoose.models.Ground || mongoose.model<IGround>("Ground", groundSchema);
+
+export const deepUnflatten = (obj: any) => {
+  const result = {};
+  for (const flatKey in obj) {
+    const keys = flatKey.replace(/\[/g, ".").replace(/\]/g, "").split(".");
+    let current: any = result;
+
+    keys.forEach((key: any, i) => {
+      const isLast = i === keys.length - 1;
+      const nextKey = keys[i + 1];
+      if (/^\d+$/.test(key)) key = parseInt(key);
+      if (isLast) {
+        const val: any = obj[flatKey];
+        current[key] =
+          typeof val === "string" && !isNaN(Number(val)) ? Number(val) : val;
+      } else {
+        if (!current[key]) {
+          current[key] = /^\d+$/.test(nextKey) ? [] : {};
+        }
+        current = current[key];
+      }
+    });
+  }
+  return result;
+};

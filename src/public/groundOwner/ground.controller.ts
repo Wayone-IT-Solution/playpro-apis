@@ -1,9 +1,9 @@
 import ApiError from "../../utils/ApiError";
 import ApiResponse from "../../utils/ApiResponse";
-import { Ground } from "../../modals/ground.model";
 import { deleteFromS3 } from "../../config/s3Uploader";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
+import { deepUnflatten, Ground } from "../../modals/ground.model";
 
 const groundService = new CommonService(Ground);
 
@@ -19,12 +19,12 @@ export class GroundController {
         return next(new ApiError(403, "Only ground owners can create grounds"));
       }
 
-      const ground = await Ground.create({
-        ...req.body,
+      req.body = deepUnflatten({
         images,
+        ...req.body,
         userId: user.id,
-      });
-
+      })
+      const ground = await Ground.create(req.body);
       return res
         .status(201)
         .json({ success: true, message: "Ground created", data: ground });
@@ -83,6 +83,7 @@ export class GroundController {
         (value, index, self) => self.indexOf(value) === index
       );
       req.body.images = mergedImages;
+      req.body = deepUnflatten(req.body)
       Object.assign(ground, req.body);
       await ground.save();
 
@@ -128,7 +129,9 @@ export class GroundController {
       const mergedImages = [...existingImages, ...images].filter(
         (value, index, self) => self.indexOf(value) === index
       );
+
       req.body.images = mergedImages;
+      req.body = deepUnflatten(req.body)
       Object.assign(ground, req.body);
       await ground.save();
 
@@ -232,7 +235,7 @@ export class GroundController {
     try {
       const ground = await Ground.findOne({
         _id: req.params.id,
-        status: "Active",
+        status: "active",
       });
       if (!ground) return next(new ApiError(404, "Ground not found"));
       res
@@ -273,10 +276,11 @@ export class GroundController {
           $project: {
             _id: 1,
             name: 1,
+            type: 1,
             status: 1,
             images: 1,
-            type: 1,
             address: 1,
+            pitchType: 1,
             updatedAt: 1,
             createdAt: 1,
             description: 1,
@@ -468,17 +472,30 @@ export class GroundController {
   ) {
     try {
       const result = await Ground.aggregate([
-        { $match: { status: "Active" } },
+        { $match: { status: "active" } },
         {
           $group: {
-            _id: "$type",
+            _id: null,
+            counts: {
+              $push: {
+                en: "$type.en",
+                ar: "$type.ar",
+              },
+            },
+          },
+        },
+        { $unwind: "$counts" },
+        {
+          $group: {
+            _id: { en: "$counts.en", ar: "$counts.ar" },
             count: { $sum: 1 },
           },
         },
         {
           $project: {
             _id: 0,
-            type: "$_id",
+            type_en: "$_id.en",
+            type_ar: "$_id.ar",
             count: 1,
           },
         },
@@ -490,7 +507,7 @@ export class GroundController {
           new ApiResponse(
             200,
             result,
-            "Ground count by type fetched successfully"
+            "Ground count by type (EN & AR separated) fetched successfully"
           )
         );
     } catch (err) {
