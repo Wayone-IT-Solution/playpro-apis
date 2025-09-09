@@ -18,6 +18,7 @@ export interface IGround extends Document {
   type: ILocalizedField;
   city: ILocalizedField;
   address: ILocalizedField;
+  sponsored: ILocalizedField;
   startTime: string; // e.g., "08:00"
   endTime: string;   // e.g., "22:00"
   pitchType: ILocalizedField;
@@ -74,6 +75,10 @@ const groundSchema = new Schema<IGround>(
       required: true,
     },
     city: {
+      type: localizedFieldSchema,
+      required: true,
+    },
+    sponsored: {
       type: localizedFieldSchema,
       required: true,
     },

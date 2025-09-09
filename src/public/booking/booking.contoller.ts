@@ -7,10 +7,98 @@ import { Ground } from "../../modals/ground.model";
 import { Booking } from "../../modals/booking.model";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
-import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
 import { sendBookingEmail } from "../../utils/confirmationService";
+import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
+import { Coupon, CouponStatus, CouponType } from "../../modals/coupon.model";
 
 const bookingService = new CommonService(Booking);
+
+// ---------------- Apply Coupon ----------------
+export const applyCoupon = async (req: Request, res: Response) => {
+  try {
+    const { bookingId, couponCode } = req.body;
+
+    if (!bookingId || !couponCode)
+      throw new ApiError(400, "Booking ID and Coupon Code are required");
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) throw new ApiError(404, "Booking not found");
+
+    if (booking.status !== "pending")
+      throw new ApiError(400, "Coupon can only be applied on pending orders");
+
+    const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+    if (!coupon) throw new ApiError(404, "Invalid coupon code");
+
+    // ✅ Validate coupon
+    const now = new Date();
+    if (coupon.status !== CouponStatus.ACTIVE) {
+      throw new ApiError(400, "Coupon is not active");
+    }
+    if (coupon.startDate > now) {
+      throw new ApiError(400, "Coupon is not yet valid");
+    }
+    if (coupon.endDate < now) {
+      throw new ApiError(400, "Coupon has expired");
+    }
+    if (coupon.minBookingAmount && booking.totalAmount < coupon.minBookingAmount) {
+      throw new ApiError(400, `Minimum booking amount should be ₹${coupon.minBookingAmount}`);
+    }
+
+    // ✅ Calculate discount
+    let discountAmount = 0;
+    if (coupon.type === CouponType.FLAT) {
+      discountAmount = coupon.discountValue;
+    } else if (coupon.type === CouponType.PERCENTAGE) {
+      discountAmount = (booking.totalAmount * coupon.discountValue) / 100;
+      if (coupon.maxDiscountAmount) {
+        discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
+      }
+    }
+
+    // ✅ Update booking
+    booking.discountAmount = discountAmount;
+    booking.finalAmount = booking.totalAmount - discountAmount;
+    booking.couponId = coupon._id as any;
+    await booking.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, booking, "Coupon applied successfully"));
+  } catch (error: any) {
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiError(error.statusCode || 500, error.message));
+  }
+};
+
+// ---------------- Remove Coupon ----------------
+export const removeCoupon = async (req: Request, res: Response) => {
+  try {
+    const { bookingId } = req.body;
+    if (!bookingId) throw new ApiError(400, "Booking ID is required");
+
+    const order = await Booking.findById(bookingId);
+    if (!order) throw new ApiError(404, "Booking not found");
+
+    if (order.status !== "pending")
+      throw new ApiError(400, "Coupon can only be removed from pending orders");
+
+    // Reset coupon fields
+    order.discountAmount = 0;
+    order.finalAmount = order.totalAmount;
+    order.couponId = undefined as any;
+    await order.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, order, "Coupon removed successfully"));
+  } catch (error: any) {
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiError(error.statusCode || 500, error.message));
+  }
+};
 
 export const createBooking = async (
   req: AuthenticatedRequest,
@@ -226,6 +314,7 @@ export const updateBooking = async (
     next(error);
   }
 };
+
 export const getBookingById = async (
   req: Request,
   res: Response,
@@ -481,6 +570,7 @@ export const rescheduleBooking = async (
     next(err);
   }
 };
+
 export const getAllTransactions = async (
   req: Request,
   res: Response,

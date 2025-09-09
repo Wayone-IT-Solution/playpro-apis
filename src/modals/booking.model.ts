@@ -1,26 +1,23 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IBooking extends Document {
-  userId: mongoose.Types.ObjectId;
-  groundId: mongoose.Types.ObjectId;
-  slots: mongoose.Types.ObjectId[]; // Array of slot IDs
-  rescheduled?: boolean;
-  totalAmount: number;
-  finalAmount: number;
-  numberOfGuests: number;
-  status: "pending" | "confirmed" | "completed" | "rescheduled";
-  paymentStatus: "pending" | "paid" | "failed" | "refunded";
-  paymentId?: string;
   createdAt: Date;
   updatedAt: Date;
-  notes: Record<string, any>; // empty object by default
-  // emergencyContact: {
-  //   name: string;
-  //   phoneNumber: string;
-  //   email: string;
-  // };
-  paymentDetails: Record<string, any>;
+  paymentId?: string;
+  totalAmount: number;
+  finalAmount: number;
+  rescheduled?: boolean;
+  discountAmount: number;
+  numberOfGuests: number;
   meta?: Record<string, any>;
+  notes: Record<string, any>;
+  userId: mongoose.Types.ObjectId;
+  slots: mongoose.Types.ObjectId[];
+  couponId: mongoose.Types.ObjectId;
+  groundId: mongoose.Types.ObjectId;
+  paymentDetails: Record<string, any>;
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  status: "pending" | "confirmed" | "completed" | "rescheduled";
 }
 
 const bookingSchema = new Schema<IBooking>(
@@ -46,14 +43,15 @@ const bookingSchema = new Schema<IBooking>(
         required: true,
       },
     ],
-    // couponId: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Coupon",
-    // },
+    couponId: {
+      type: Schema.Types.ObjectId,
+      ref: "Coupon",
+    },
     totalAmount: {
       type: Number,
       required: true,
     },
+    discountAmount: { type: Number },
     finalAmount: {
       type: Number,
       required: true,
@@ -86,27 +84,6 @@ const bookingSchema = new Schema<IBooking>(
       type: Schema.Types.Mixed,
       default: {},
     },
-    // emergencyContact: {
-    //   name: {
-    //     type: String,
-    //     required: true,
-    //     trim: true,
-    //   },
-    //   phoneNumber: {
-    //     type: String,
-    //     required: true,
-    //     validate: {
-    //       validator: (val: string) => /^[6-9]\d{9}$/.test(val),
-    //       message: "Invalid Indian mobile number",
-    //     },
-    //   },
-    //   email: {
-    //     type: String,
-    //     required: true,
-    //     lowercase: true,
-    //     trim: true,
-    //   },
-    // },
     paymentDetails: {
       type: Schema.Types.Mixed,
       default: {},

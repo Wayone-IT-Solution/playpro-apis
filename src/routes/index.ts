@@ -12,9 +12,12 @@ import { Router } from "express";
 // ===============================
 // Admin Routes
 // ===============================
-import adminRoutes from "../admin/admin/admin.routes";
 import roleRoutes from "../admin/role/role.routes";
+import adminRoutes from "../admin/admin/admin.routes";
+import coachRoutes from "../admin/coach/coach.routes";
+import couponRoutes from "../admin/coupon/coupon.routes";
 import bannerRoutes from "../admin/banner/banner.routes";
+import registrationRoutes from "../admin/footballregistration/registration.routes";
 
 // ===============================
 // Public Routes
@@ -48,7 +51,10 @@ const router = Router();
 // ---------- Admin ----------
 router.use("/role", roleRoutes);
 router.use("/admin", adminRoutes);
+router.use("/coach", coachRoutes);
 router.use("/banner", bannerRoutes);
+router.use("/coupon", couponRoutes);
+router.use("/registration", registrationRoutes);
 
 // ---------- Public ----------
 router.use("/blog", blog);
@@ -60,8 +66,8 @@ router.use("/user", userRoutes);
 router.use("/slot", groundSlot);
 router.use("/booking", booking);
 router.use("/product", product);
-router.use("/category", category);
 router.use("/contact", contact);
+router.use("/category", category);
 router.use("/ground", groundOwner);
 router.use("/testimonial", testimonial);
 router.use("/location", stateCityRoutes);

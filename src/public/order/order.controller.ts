@@ -5,8 +5,97 @@ import { Cart } from "../../modals/cart.model";
 import { Order } from "../../modals/order.model";
 import ApiResponse from "../../utils/ApiResponse";
 import { CommonService } from "../../services/common.services";
+import { Coupon, CouponStatus, CouponType } from "../../modals/coupon.model";
 
 const orderService = new CommonService(Order);
+
+// ---------------- Apply Coupon ----------------
+export const applyCoupon = async (req: Request, res: Response) => {
+  try {
+    const { orderId, couponCode } = req.body;
+
+    if (!orderId || !couponCode) {
+      throw new ApiError(400, "Order ID and Coupon Code are required");
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) throw new ApiError(404, "Order not found");
+
+    if (order.orderStatus !== "pending")
+      throw new ApiError(400, "Coupon can only be applied on pending orders");
+
+    const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+    if (!coupon) throw new ApiError(404, "Invalid coupon code");
+
+    // ✅ Validate coupon
+    const now = new Date();
+    if (coupon.status !== CouponStatus.ACTIVE) {
+      throw new ApiError(400, "Coupon is not active");
+    }
+    if (coupon.startDate > now) {
+      throw new ApiError(400, "Coupon is not yet valid");
+    }
+    if (coupon.endDate < now) {
+      throw new ApiError(400, "Coupon has expired");
+    }
+    if (coupon.minBookingAmount && order.totalAmount < coupon.minBookingAmount) {
+      throw new ApiError(400, `Minimum order amount should be ₹${coupon.minBookingAmount}`);
+    }
+
+    // ✅ Calculate discount
+    let discountAmount = 0;
+    if (coupon.type === CouponType.FLAT) {
+      discountAmount = coupon.discountValue;
+    } else if (coupon.type === CouponType.PERCENTAGE) {
+      discountAmount = (order.totalAmount * coupon.discountValue) / 100;
+      if (coupon.maxDiscountAmount) {
+        discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
+      }
+    }
+
+    // ✅ Update order
+    order.discountAmount = discountAmount;
+    order.finalAmount = order.totalAmount - discountAmount;
+    order.couponId = coupon._id as any;
+    await order.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, order, "Coupon applied successfully"));
+  } catch (error: any) {
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiError(error.statusCode || 500, error.message));
+  }
+};
+
+// ---------------- Remove Coupon ----------------
+export const removeCoupon = async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) throw new ApiError(400, "Order ID is required");
+
+    const order = await Order.findById(orderId);
+    if (!order) throw new ApiError(404, "Order not found");
+
+    if (order.orderStatus !== "pending")
+      throw new ApiError(400, "Coupon can only be removed from pending orders");
+
+    // Reset coupon fields
+    order.discountAmount = 0;
+    order.finalAmount = order.totalAmount;
+    order.couponId = undefined as any;
+    await order.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, order, "Coupon removed successfully"));
+  } catch (error: any) {
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiError(error.statusCode || 500, error.message));
+  }
+};
 
 export const placeOrder = async (req: Request, res: Response) => {
   try {
@@ -310,11 +399,10 @@ export const getAllOrders = async (req: Request, res: Response) => {
       .json(new ApiError(error.statusCode || 500, error.message));
   }
 };
+
 export const getAllOrdersForAdmin = async (req: Request, res: Response) => {
   try {
-    // Define pipeline for aggregation
     const pipeline = [
-      // join user details
       {
         $lookup: {
           from: "users",
