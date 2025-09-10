@@ -1,13 +1,15 @@
 import { Router } from "express";
 import {
+  updateBlog,
+  deleteBlog,
   createBlog,
   getAllBlogs,
   getBlogById,
-  updateBlog,
-  deleteBlog,
+  getBlogBySlug,
+  getAllPublicBlogs
 } from "./blog.controller";
-import { authenticateToken, isAdmin } from "../../middlewares/authMiddleware";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { authenticateToken, isAdmin } from "../../middlewares/authMiddleware";
 import {
   dynamicUpload,
   s3UploaderMiddleware,
@@ -24,6 +26,8 @@ router.post(
   asyncHandler(createBlog)
 );
 router.get("/", authenticateToken, asyncHandler(getAllBlogs));
+router.get("/public", asyncHandler(getAllPublicBlogs));
+router.get("/public/:slug", asyncHandler(getBlogBySlug));
 router.get("/:id", authenticateToken, asyncHandler(getBlogById));
 router.put(
   "/:id",

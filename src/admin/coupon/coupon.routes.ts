@@ -8,6 +8,7 @@ const {
   getAllCoupons,
   updateCouponById,
   deleteCouponById,
+  getAllPublicCoupons
 } = CouponController;
 
 const router = express.Router();
@@ -15,6 +16,7 @@ const router = express.Router();
 router
   .get("/", authenticateToken, isAdmin, asyncHandler(getAllCoupons))
   .post("/", authenticateToken, isAdmin, asyncHandler(createCoupon))
+  .get("/public", authenticateToken, asyncHandler(getAllPublicCoupons))
   .get(
     "/:id",
     authenticateToken,

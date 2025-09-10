@@ -33,6 +33,17 @@ export class CouponController {
     }
   }
 
+  static async getAllPublicCoupons(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await CouponService.getAll({ ...req.query, status: "active" });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, result, "Data fetched successfully"));
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getCouponById(req: Request, res: Response, next: NextFunction) {
     try {
       const { role } = (req as any).user;

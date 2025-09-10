@@ -211,7 +211,7 @@ export const createBooking = async (
 
     const userData = await User.findById({ _id: userId });
 
-    await sendBookingEmail({
+    sendBookingEmail({
       to: userData?.email, booking: {
         _id: booking?.id,
         status: booking?.status,

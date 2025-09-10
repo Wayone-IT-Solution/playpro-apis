@@ -19,7 +19,7 @@ export interface IBlogCategory extends Document {
 // 2. Localized field schema
 const localizedFieldSchema = new Schema<ILocalizedField>(
   {
-    en: { type: String, required: true, trim: true, maxlength: 50, minlength: 2 },
+    en: { type: String, trim: true, maxlength: 50, minlength: 2 },
     ar: { type: String, trim: true, maxlength: 50, minlength: 2 },
   },
   { _id: false }
@@ -29,15 +29,12 @@ const localizedFieldSchema = new Schema<ILocalizedField>(
 const BlogCategorySchema: Schema<IBlogCategory> = new Schema(
   {
     name: { type: localizedFieldSchema, required: true },
-    type: { type: String, required: true, default: "general" },
-    description: { type: localizedFieldSchema },
+    type: { type: String, default: "general" },
+    // description: { type: localizedFieldSchema },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
-
-// 4. Compound index to enforce unique name.en + type
-BlogCategorySchema.index({ "name.en": 1, type: 1 }, { unique: true });
 
 // 5. Export model with hot-reload safety
 export const BlogCategory =
