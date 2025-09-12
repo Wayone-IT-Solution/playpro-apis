@@ -10,6 +10,8 @@ import { CommonService } from "../../services/common.services";
 import { sendBookingEmail } from "../../utils/confirmationService";
 import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
 import { Coupon, CouponStatus, CouponType } from "../../modals/coupon.model";
+import { generateBookingSMSTemplate, sendSMS } from "../../services/twillio.services";
+import { convertToSaudiTime } from "../../utils/helper";
 
 const bookingService = new CommonService(Booking);
 
@@ -42,7 +44,7 @@ export const applyCoupon = async (req: Request, res: Response) => {
       throw new ApiError(400, "Coupon has expired");
     }
     if (coupon.minBookingAmount && booking.totalAmount < coupon.minBookingAmount) {
-      throw new ApiError(400, `Minimum booking amount should be ₹${coupon.minBookingAmount}`);
+      throw new ApiError(400, `Minimum booking amount should be SAR${coupon.minBookingAmount}`);
     }
 
     // ✅ Calculate discount
@@ -223,6 +225,14 @@ export const createBooking = async (
       }, userName: userData?.firstName + " " + userData?.lastName
     })
 
+    if (userData && userData?.phoneNumber) {
+      // const smsText = await generateBookingSMSTemplate(booking, userData);
+      const smsText = `Dear Mr. ${userData?.firstName},
+Your booking registered for ${convertToSaudiTime(booking?.createdAt)}. Total Amount is ${booking?.finalAmount}.`
+      const sid = await sendSMS(`${Number(userData?.phoneNumber)}`, smsText);
+
+    }
+
     return res.status(200).json({
       success: true,
       message: "Booking created successfully",
@@ -304,6 +314,7 @@ export const updateBooking = async (
     booking.paymentStatus = "paid";
     booking.status = "confirmed";
     await booking.save();
+
 
     return res.status(200).json({
       success: true,

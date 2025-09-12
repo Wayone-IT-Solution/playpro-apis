@@ -39,7 +39,7 @@ export const applyCoupon = async (req: Request, res: Response) => {
       throw new ApiError(400, "Coupon has expired");
     }
     if (coupon.minBookingAmount && order.totalAmount < coupon.minBookingAmount) {
-      throw new ApiError(400, `Minimum order amount should be ₹${coupon.minBookingAmount}`);
+      throw new ApiError(400, `Minimum order amount should be SAR${coupon.minBookingAmount}`);
     }
 
     // ✅ Calculate discount

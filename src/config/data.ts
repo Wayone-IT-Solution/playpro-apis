@@ -1292,4 +1292,4 @@ export const region: any = {
         "Srirampore",
         "Adra",
     ],
-};
+}; 

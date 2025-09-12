@@ -52,4 +52,9 @@ export const config = {
     rateLimitEnabled: toBool(process.env.RATE_LIMIT_ENABLED),
     rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60000),
   },
+  twillio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID ?? '',
+    authToken: process.env.TWILIO_AUTH_TOKEN ?? '',
+    fromPhone: process.env.TWILIO_PHONE_NUMBER ?? ''
+  }
 };

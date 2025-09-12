@@ -11,7 +11,8 @@ export interface IUser extends Document {
   password?: string;
   fcmToken?: string;
   firstName: string;
-  dateOfBirth: Date;
+  dateOfBirth: Date | null;
+  gender?: "male" | "female" | "other";
   phoneNumber: string;
   role?: string;
   status: "active" | "pending";
@@ -23,6 +24,12 @@ export interface IUser extends Document {
   };
   businessDetail?: Record<string, any>;
   contactDetail?: Record<string, any>;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+  };
   generateJWT(): string;
   comparePassword?(candidatePassword: string): Promise<boolean>;
 }
@@ -57,6 +64,18 @@ const userSchema = new Schema<IUser>(
     },
     dateOfBirth: {
       type: Date,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      default: "other",
+    },
+    address: {
+      street: { type: String, trim: true },
+      city: { type: String, trim: true },
+      state: { type: String, trim: true },
+      postalCode: { type: String, trim: true },
     },
     profilePicture: {
       type: String,

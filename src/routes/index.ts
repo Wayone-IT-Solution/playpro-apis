@@ -38,10 +38,12 @@ import stateCityRoutes from "../public/statecity/statecity.routes";
 import testimonial from "../public/testimonial/testimonial.routes";
 import productCategory from "../public/productCategory/productCategory.route";
 
+
 // ===============================
 // Dashboard Routes
 // ===============================
 import revenue from "../dashboard/router/revenue.route";
+import Sponsor from "../public/sponsor/sponsor.routes";
 
 // ===============================
 // Initialize Main Router
@@ -70,6 +72,8 @@ router.use("/contact", contact);
 router.use("/category", category);
 router.use("/ground", groundOwner);
 router.use("/testimonial", testimonial);
+router.use("/sponsor", Sponsor);
+
 router.use("/location", stateCityRoutes);
 router.use("/product-category", productCategory);
 

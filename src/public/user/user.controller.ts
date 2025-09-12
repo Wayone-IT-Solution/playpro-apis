@@ -139,6 +139,7 @@ export const getUserById = async (
 ) => {
   try {
     const userId = req.params?.id;
+    console.log(userId)
     const user = await userService.getById(userId!, false);
     if (!user) throw new ApiError(404, "User not found");
 
@@ -169,6 +170,8 @@ export const updateUser = async (
       firstName,
       phoneNumber,
       dateOfBirth,
+      gender,
+      address,
       contactDetail,
       businessDetail,
     } = req.body;
@@ -180,15 +183,26 @@ export const updateUser = async (
     if (lastName) updatedFields.lastName = lastName;
     if (firstName) updatedFields.firstName = firstName;
     if (dateOfBirth) updatedFields.dateOfBirth = dateOfBirth;
+    if (gender) updatedFields.gender = gender;
     if (phoneNumber) updatedFields.phoneNumber = phoneNumber;
     if (businessDetail) updatedFields.businessDetail = businessDetail;
     if (contactDetail) updatedFields.contactDetail = contactDetail;
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, {
+    // Handle nested address fields
+    if (address) {
+      updatedFields.address = {};
+      if (address.street) updatedFields.address.street = address.street;
+      if (address.city) updatedFields.address.city = address.city;
+      if (address.state) updatedFields.address.state = address.state;
+      if (address.postalCode) updatedFields.address.postalCode = address.postalCode;
+    }
+    const user = await User.findById(id)
+    const updatedUser = await User.findByIdAndUpdate(id ?? userId, updatedFields, {
       new: true,
       runValidators: true,
     });
 
+    console.log(userId, updateUser, user)
     if (!updatedUser) throw new ApiError(404, "User not found");
 
     return res
@@ -198,6 +212,7 @@ export const updateUser = async (
     next(error);
   }
 };
+
 export const getAllOtps = async (
   req: Request,
   res: Response,
