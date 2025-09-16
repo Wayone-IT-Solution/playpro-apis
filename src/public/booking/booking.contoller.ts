@@ -236,7 +236,7 @@ Your booking registered for ${convertToSaudiTime(booking?.createdAt)}. Total Amo
     return res.status(200).json({
       success: true,
       message: "Booking created successfully",
-      data: booking,
+      data: booking, 
     });
   } catch (error) {
     console.log(error);

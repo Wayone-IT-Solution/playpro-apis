@@ -44,6 +44,7 @@ import productCategory from "../public/productCategory/productCategory.route";
 // ===============================
 import revenue from "../dashboard/router/revenue.route";
 import Sponsor from "../public/sponsor/sponsor.routes";
+import academyRouter from "../public/academy/academy.routes";
 
 // ===============================
 // Initialize Main Router
@@ -73,6 +74,9 @@ router.use("/category", category);
 router.use("/ground", groundOwner);
 router.use("/testimonial", testimonial);
 router.use("/sponsor", Sponsor);
+router.use("/academy", academyRouter);
+// router.use("/sponsor", Sponsor);
+// router.use("/sponsor", Sponsor);
 
 router.use("/location", stateCityRoutes);
 router.use("/product-category", productCategory);
