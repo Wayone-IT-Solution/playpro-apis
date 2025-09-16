@@ -236,7 +236,7 @@ Your booking registered for ${convertToSaudiTime(booking?.createdAt)}. Total Amo
     return res.status(200).json({
       success: true,
       message: "Booking created successfully",
-      data: booking, 
+      data: booking,
     });
   } catch (error) {
     console.log(error);
@@ -438,15 +438,38 @@ export const getBookingUser = async (
       throw new ApiError(401, "Unauthorized: User not found in token");
     }
 
-    const bookings = await Booking.find({ userId })
-      .populate("groundId", "name address location pricePerHour images type pitchType")
-      .populate("slots")
-      .sort({ createdAt: -1 });
+    const bookings = await Booking.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $lookup: {
+          from: "grounds",
+          localField: "groundId",
+          foreignField: "_id",
+          as: "groundId",
+        },
+      },
+      { $unwind: "$groundId" },
+      {
+        $lookup: {
+          from: "reviews",
+          localField: "_id",
+          foreignField: "bookingId",
+          as: "review",
+        },
+      },
+      { $addFields: { isReviewed: { $gt: [{ $size: "$review" }, 0] } } },
+      { $project: { review: 0 } },
+      { $sort: { createdAt: -1 } },
+    ]);
 
     return res
       .status(200)
       .json(
-        new ApiResponse(200, bookings, "User bookings fetched successfully")
+        new ApiResponse(
+          200,
+          bookings,
+          "User bookings fetched successfully"
+        )
       );
   } catch (error) {
     console.error("❌ Error in getBookingUser:", error);

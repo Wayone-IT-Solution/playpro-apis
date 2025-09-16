@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IReview extends Document {
-  bookingId: mongoose.Types.ObjectId;
+  feedback: string;
   userId: mongoose.Types.ObjectId;
   groundId: mongoose.Types.ObjectId;
-  feedback: string;
+  bookingId: mongoose.Types.ObjectId;
   ratings: {
     cleanliness: number;
     maintenance: number;
@@ -31,16 +31,16 @@ const RatingsSchema = new Schema(
 
 const ReviewSchema = new Schema<IReview>(
   {
-    bookingId: { type: Schema.Types.ObjectId, ref: "Booking", required: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     groundId: { type: Schema.Types.ObjectId, ref: "Ground", required: true },
+    bookingId: { type: Schema.Types.ObjectId, ref: "Booking", required: true },
     feedback: { type: String, required: true },
-    ratings: { type: RatingsSchema, required: true },
     averageRating: { type: Number, required: true },
+    ratings: { type: RatingsSchema, required: true },
     status: {
       type: String,
-      enum: ["active", "inactive"],
       default: "inactive",
+      enum: ["active", "inactive"],
     },
   },
   { timestamps: true }

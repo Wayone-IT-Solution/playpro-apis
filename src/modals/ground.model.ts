@@ -17,6 +17,8 @@ export interface IGround extends Document {
   status: "active" | "inactive" | "maintenance";
   type: ILocalizedField;
   city: ILocalizedField;
+  isNearByPlace: string;
+  isHigherRanked: string;
   address: ILocalizedField;
   sponsored: ILocalizedField;
   startTime: string; // e.g., "08:00"
@@ -70,13 +72,23 @@ const groundSchema = new Schema<IGround>(
       default: "active",
       enum: ["active", "inactive", "maintenance"],
     },
+    isNearByPlace: {
+      type: String,
+      default: "active",
+      enum: ["active", "inactive"],
+    },
+    isHigherRanked: {
+      type: String,
+      default: "active",
+      enum: ["active", "inactive"],
+    },
     address: {
-      type: localizedFieldSchema,
       required: true,
+      type: localizedFieldSchema,
     },
     city: {
-      type: localizedFieldSchema,
       required: true,
+      type: localizedFieldSchema,
     },
     sponsored: {
       type: localizedFieldSchema,

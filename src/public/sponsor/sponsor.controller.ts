@@ -65,7 +65,7 @@ export class SponsorController {
     try {
       const result = await SponsorService.getAll({
         ...req.query,
-        isActive: true,
+        isActive: "active",
       });
       return res
         .status(200)

@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import ApiError from "../../utils/ApiError";
+import ApiResponse from "../../utils/ApiResponse";
 import { Review } from "../../modals/review.model";
 import { Booking } from "../../modals/booking.model";
-import ApiResponse from "../../utils/ApiResponse";
-import ApiError from "../../utils/ApiError";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
 
 const reviewService = new CommonService(Review);
@@ -24,13 +24,12 @@ export const createReview = asyncHandler(
       throw new ApiError(400, "Already reviewed this booking");
 
     const { userId, groundId } = booking;
-
     const review = await Review.create({
-      bookingId,
       userId,
+      ratings,
       groundId,
       feedback,
-      ratings,
+      bookingId,
       averageRating: parseFloat(averageRating.toFixed(1)),
     });
 
@@ -116,12 +115,12 @@ export const getAllReviewsAdmin = asyncHandler(
           createdAt: 1,
           updatedAt: 1,
           userEmail: "$userData.email",
-          userFirstName: "$userData.firstName",
-          userLastName: "$userData.lastName",
-          userPhoneNumber: "$userData.phoneNumber",
           groundName: "$groundData.name",
+          userLastName: "$userData.lastName",
           groundAddress: "$groundData.address",
+          userFirstName: "$userData.firstName",
           groundLocation: "$groundData.location",
+          userPhoneNumber: "$userData.phoneNumber",
         },
       },
     ];
