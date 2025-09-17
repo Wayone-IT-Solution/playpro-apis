@@ -1,18 +1,18 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAddress {
-  street: string;
   city: string;
   state: string;
-  postalCode: string;
+  street: string;
   country: string;
+  postalCode: string;
 }
 
 export interface IOrder extends Document {
   items: any;
-  address: IAddress;
   createdAt: Date;
   updatedAt: Date;
+  address: IAddress;
   totalAmount: number;
   finalAmount: number;
   discountAmount: number;
@@ -25,11 +25,11 @@ export interface IOrder extends Document {
 
 const addressSchema = new Schema<IAddress>(
   {
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    postalCode: { type: String, required: true },
-    country: { type: String, required: true },
+    city: { type: String },
+    state: { type: String },
+    street: { type: String },
+    country: { type: String },
+    postalCode: { type: String },
   },
   { _id: false } // Prevent Mongoose from creating a separate _id for this subdocument
 );
@@ -56,7 +56,7 @@ const orderSchema = new Schema<IOrder>(
       ref: "Coupon",
       type: Schema.Types.ObjectId,
     },
-    address: { type: addressSchema, required: true },
+    address: { type: addressSchema },
   },
   { timestamps: true }
 );

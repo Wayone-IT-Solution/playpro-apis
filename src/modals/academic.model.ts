@@ -72,14 +72,4 @@ const AcademySchema = new Schema<IAcademy>(
     timestamps: true,
   }
 );
-
-// Add index for text search on localized fields
-AcademySchema.index({
-  "name.en": "text",
-  "name.ar": "text",
-  "description.en": "text",
-  "description.ar": "text",
-});
-
-// Create and export model
 export const Academy = mongoose.model<IAcademy>("Academy", AcademySchema);

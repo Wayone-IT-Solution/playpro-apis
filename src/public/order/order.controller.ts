@@ -9,7 +9,6 @@ import { Coupon, CouponStatus, CouponType } from "../../modals/coupon.model";
 
 const orderService = new CommonService(Order);
 
-// ---------------- Apply Coupon ----------------
 export const applyCoupon = async (req: Request, res: Response) => {
   try {
     const { orderId, couponCode } = req.body;
@@ -69,7 +68,6 @@ export const applyCoupon = async (req: Request, res: Response) => {
   }
 };
 
-// ---------------- Remove Coupon ----------------
 export const removeCoupon = async (req: Request, res: Response) => {
   try {
     const { orderId } = req.body;
@@ -196,28 +194,67 @@ export const placeOrder = async (req: Request, res: Response) => {
     }
 
     const cart = cartData[0];
-
-    // 3. Create order
+    console.log(cart)
     const order = await Order.create({
       ...cart,
       user: userId,
       cart: cart._id,
       paymentMethod: req.body.paymentMethod || "COD",
-      paymentStatus: req.body.paymentMethod === "ONLINE" ? "pending" : "paid",
-      orderStatus: "pending",
-      address: req.body.address,
     });
-
-    // 4. Clear cart
-    await Cart.findOneAndUpdate(
-      { user: userId },
-      { $set: { items: [] } },
-      { new: true }
-    );
 
     return res
       .status(201)
       .json(new ApiResponse(201, order, "Order placed successfully"));
+  } catch (error: any) {
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiError(error.statusCode || 500, error.message));
+  }
+};
+
+export const updateOrder = async (req: Request, res: Response) => {
+  try {
+    const userId = new mongoose.Types.ObjectId((req as any).user.id);
+    const { id: orderId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      throw new ApiError(400, "Invalid order ID");
+    }
+
+    if (req.body.clear) {
+      await Cart.findOneAndUpdate(
+        { user: userId },
+        { $set: { items: [], totalAmount: 0, finalAmount: 0 } },
+        { new: true }
+      );
+    }
+
+    // Only update pending orders belonging to this user
+    const order: any = await Order.findOne({
+      _id: orderId,
+      user: userId,
+      orderStatus: "pending",
+      paymentStatus: "pending"
+    });
+
+    if (!order) {
+      const result = await orderService.getById(orderId, true);
+      if (result) return res
+        .status(200)
+        .json(new ApiResponse(200, { ...result, isPlaced: true }, "Order Already Placed successfully!"));
+
+      throw new ApiError(
+        404,
+        "Order not found or cannot be updated (not pending)"
+      );
+    }
+
+    if (req.body.address) order.address = req.body.address;
+    if (req.body.paymentMethod) order.paymentMethod = req.body.paymentMethod;
+    await order.save();
+    return res
+      .status(200)
+      .json(new ApiResponse(200, order, "Order updated successfully"));
   } catch (error: any) {
     return res
       .status(error.statusCode || 500)
@@ -344,7 +381,7 @@ export const getMyOrders = async (req: Request, res: Response) => {
 
 export const getOrderById = async (req: Request, res: Response) => {
   try {
-    const result = await orderService.getById(req.params.id);
+    const result = await orderService.getById(req.params.id, true);
     if (!result)
       return res.status(404).json(new ApiError(404, "banner not found"));
     return res
