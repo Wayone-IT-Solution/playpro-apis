@@ -7,7 +7,6 @@ export enum AcademyStatus {
   CLOSED = "closed",
 }
 
-
 export enum SportType {
   FOOTBALL = "football",
   BASKETBALL = "basketball",
@@ -29,6 +28,12 @@ export interface IAcademy extends Document {
   sports: ILocalizedField[];
   coaches: Types.ObjectId[];
   status: AcademyStatus;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  imageUrl: string;
+  rating: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,9 +72,21 @@ const AcademySchema = new Schema<IAcademy>(
       enum: Object.values(AcademyStatus),
       default: AcademyStatus.ACTIVE,
     },
+    location: {
+      lat: { type: Number, required: true },
+      lng: { type: Number, required: true },
+    },
+    imageUrl: {
+      type: String,
+    },
+    rating: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
   }
 );
+
 export const Academy = mongoose.model<IAcademy>("Academy", AcademySchema);

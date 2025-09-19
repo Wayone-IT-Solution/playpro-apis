@@ -26,7 +26,7 @@ export class AcademyController {
       const academy = await Academy.findById(id);
       if (!academy) return next(new ApiError(404, "Academy not found"));
 
-      // Optional: Check ownership or permissions here
+    
 
       Object.assign(academy, req.body);
       await academy.save();
@@ -69,6 +69,6 @@ export class AcademyController {
     }
   }
 
-  // Add any filters or status updates specific to academys here
+ 
 
 }
