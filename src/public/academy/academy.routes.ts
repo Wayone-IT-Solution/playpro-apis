@@ -1,13 +1,31 @@
-import express from "express";
-import { authenticateToken } from "../../middlewares/authMiddleware";
+import { Router } from "express";
+import {
+    createAcademy,
+    updateAcademy,
+    deleteAcademy,
+    getAcademyById,
+    getAllAcademies,
+} from "./academy.controller";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { AcademyController } from "./academy.controller";
+import { authenticateToken } from "../../middlewares/authMiddleware";
+import { dynamicUpload, s3UploaderMiddleware } from "../../middlewares/s3FileUploadMiddleware";
 
-const academyRouter = express.Router();
+const router = Router();
 
-academyRouter.post("/", authenticateToken, asyncHandler(AcademyController.createAcademy));
-academyRouter.get("/", authenticateToken, asyncHandler(AcademyController.getAllAcademys));
-academyRouter.get("/:id", authenticateToken, asyncHandler(AcademyController.getAcademyById));
-// router.put("/:id/status", authenticateToken, asyncHandler(AcademyController.updateAcademyStatus));
+router.post(
+    "/",
+    authenticateToken,
+    dynamicUpload([{ name: "imageUrl", maxCount: 1 }]),
+    s3UploaderMiddleware("academy"),
+    asyncHandler(createAcademy));
+router.get("/", authenticateToken, asyncHandler(getAllAcademies));
+router.put(
+    "/:id",
+    authenticateToken,
+    dynamicUpload([{ name: "imageUrl", maxCount: 1 }]),
+    s3UploaderMiddleware("academy"),
+    asyncHandler(updateAcademy));
+router.get("/:id", authenticateToken, asyncHandler(getAcademyById));
+router.delete("/:id", authenticateToken, asyncHandler(deleteAcademy));
 
-export default academyRouter;
+export default router;

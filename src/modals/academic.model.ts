@@ -1,44 +1,55 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
 import { ILocalizedField } from "./ground.model";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export enum AcademyStatus {
   ACTIVE = "active",
-  INACTIVE = "inactive",
   CLOSED = "closed",
+  INACTIVE = "inactive",
 }
 
+// Restrict available sports
 export enum SportType {
-  FOOTBALL = "football",
-  BASKETBALL = "basketball",
   TENNIS = "tennis",
-  SWIMMING = "swimming",
+  CRICKET = "cricket",
+  PADDLES = "paddles",
+  FOOTBALL = "football",
   VOLLEYBALL = "volleyball",
-  BADMINTON = "badminton",
-  TABLE_TENNIS = "table_tennis",
-  KARATE = "karate",
-  TAEKWONDO = "taekwondo",
-  GYMNASTICS = "gymnastics",
+  BASKETBALL = "basketball",
+}
+
+// Allowed weekdays in English (for validation)
+export enum WeekDays {
+  MONDAY = "monday",
+  TUESDAY = "tuesday",
+  WEDNESDAY = "wednesday",
+  THURSDAY = "thursday",
+  FRIDAY = "friday",
+  SATURDAY = "saturday",
+  SUNDAY = "sunday",
 }
 
 // Define IAcademy interface
 export interface IAcademy extends Document {
   name: ILocalizedField;
-  description: ILocalizedField;
+  status: AcademyStatus;
   ground: Types.ObjectId;
   sports: ILocalizedField[];
   coaches: Types.ObjectId[];
-  status: AcademyStatus;
+  description: ILocalizedField;
   location: {
     lat: number;
     lng: number;
   };
-  imageUrl: string;
   rating: number;
+  endTime: string;
   createdAt: Date;
   updatedAt: Date;
+  imageUrl: string;
+  startTime: string;
+  workingDays: ILocalizedField[];
 }
 
-// Define schema
+// Schema
 const AcademySchema = new Schema<IAcademy>(
   {
     name: {
@@ -54,13 +65,7 @@ const AcademySchema = new Schema<IAcademy>(
       ref: "Ground",
       required: true,
     },
-    sports: [
-      {
-        type: Schema.Types.Mixed,
-        enum: Object.values(SportType),
-        required: true,
-      },
-    ],
+    sports: [],
     coaches: [
       {
         type: Schema.Types.ObjectId,
@@ -69,8 +74,8 @@ const AcademySchema = new Schema<IAcademy>(
     ],
     status: {
       type: String,
-      enum: Object.values(AcademyStatus),
       default: AcademyStatus.ACTIVE,
+      enum: Object.values(AcademyStatus),
     },
     location: {
       lat: { type: Number, required: true },
@@ -83,10 +88,17 @@ const AcademySchema = new Schema<IAcademy>(
       type: Number,
       default: 0,
     },
+    startTime: {
+      type: String,
+      required: true,
+    },
+    endTime: {
+      type: String,
+      required: true,
+    },
+    workingDays: [],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export const Academy = mongoose.model<IAcademy>("Academy", AcademySchema);
