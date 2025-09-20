@@ -32,9 +32,9 @@ export enum WeekDays {
 export interface IAcademy extends Document {
   name: ILocalizedField;
   status: AcademyStatus;
-  ground: Types.ObjectId;
   sports: ILocalizedField[];
   coaches: Types.ObjectId[];
+  grounds: Types.ObjectId[];
   description: ILocalizedField;
   location: {
     lat: number;
@@ -60,16 +60,17 @@ const AcademySchema = new Schema<IAcademy>(
       type: Schema.Types.Mixed,
       required: true,
     },
-    ground: {
-      type: Schema.Types.ObjectId,
-      ref: "Ground",
-      required: true,
-    },
     sports: [],
     coaches: [
       {
         type: Schema.Types.ObjectId,
         ref: "Coach",
+      },
+    ],
+    grounds: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Ground",
       },
     ],
     status: {

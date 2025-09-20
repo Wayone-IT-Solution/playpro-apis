@@ -7,11 +7,11 @@ export enum ApplicationStatus {
 }
 
 export interface IApplication extends Document {
-  userId: Types.ObjectId;       // Player applying
-  academyId: Types.ObjectId;    // Academy applied to
-  sport: string;                // Sport applied for
+  userId: Types.ObjectId; // Player applying
+  academyId: Types.ObjectId; // Academy applied to
+  sport: string; // Sport applied for
   status: ApplicationStatus;
-  verificationData?: any;       // Any documents or verification info
+  verificationData?: any; // Any documents or verification info
   appliedAt: Date;
   approvedAt?: Date;
   rejectedAt?: Date;
@@ -37,4 +37,7 @@ const ApplicationSchema = new Schema<IApplication>(
   { timestamps: true }
 );
 
-export const Application = mongoose.model<IApplication>("Application", ApplicationSchema);
+export const Application = mongoose.model<IApplication>(
+  "Application",
+  ApplicationSchema
+);

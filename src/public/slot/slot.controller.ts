@@ -116,28 +116,44 @@ export const getNextDaysSlots = async (
 };
 
 export const deleteSlot = async (request: Request, response: Response) => {
-  const { slot_id, groundId } = request.body;
+  const { slot_id, groundId, deleteAll } = request.body;
 
-  if (!slot_id || !groundId) {
+  if (!groundId) {
     return response
       .status(400)
-      .json(new ApiError(400, "Slot ID and Ground ID are required"));
+      .json(new ApiError(400, "Ground ID is required"));
   }
 
   try {
-    const updatedData = await Slot.updateOne(
-      { groundId, "timeslots._id": slot_id },
-      { $pull: { timeslots: { _id: slot_id } } }
-    );
+    let updatedData;
+
+    if (deleteAll) {
+      updatedData = await Slot.updateOne(
+        { groundId },
+        { $pull: { timeslots: { isBooked: false } } }
+      );
+    } else {
+      if (!slot_id) {
+        return response
+          .status(400)
+          .json(new ApiError(400, "Slot ID is required if deleteAll is false"));
+      }
+      updatedData = await Slot.updateOne(
+        { groundId, "timeslots._id": slot_id },
+        { $pull: { timeslots: { _id: slot_id } } }
+      );
+    }
 
     if (updatedData.modifiedCount > 0) {
       return response
         .status(200)
-        .json(new ApiResponse(200, updatedData, "Slot deleted successfully"));
+        .json(
+          new ApiResponse(200, updatedData, "Slot(s) deleted successfully")
+        );
     } else {
       return response
         .status(404)
-        .json(new ApiError(404, "Slot not found or no changes made"));
+        .json(new ApiError(404, "No matching slot(s) found or already booked"));
     }
   } catch (error: any) {
     return response
