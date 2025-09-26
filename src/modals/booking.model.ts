@@ -4,6 +4,7 @@ export interface IBooking extends Document {
   createdAt: Date;
   updatedAt: Date;
   paymentId?: string;
+  cancelledAt?: Date;
   totalAmount: number;
   finalAmount: number;
   rescheduled?: boolean;
@@ -11,6 +12,7 @@ export interface IBooking extends Document {
   numberOfGuests: number;
   meta?: Record<string, any>;
   notes: Record<string, any>;
+  cancellationReason?: string;
   userId: mongoose.Types.ObjectId;
   slots: mongoose.Types.ObjectId[];
   couponId: mongoose.Types.ObjectId;
@@ -18,8 +20,6 @@ export interface IBooking extends Document {
   paymentDetails: Record<string, any>;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   status: "pending" | "confirmed" | "completed" | "rescheduled" | "cancelled";
-  cancellationReason?: string;
-  cancelledAt?: Date;
 }
 
 const bookingSchema = new Schema<IBooking>(

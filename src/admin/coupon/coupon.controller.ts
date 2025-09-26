@@ -35,10 +35,14 @@ export class CouponController {
 
   static async getAllPublicCoupons(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await CouponService.getAll({ ...req.query, status: "active" });
+      const today = new Date();
+      const result: any = await CouponService.getAll({ ...req.query, status: "active" });
+      const validCoupons = result.filter(
+        (coupon: any) => new Date(coupon.endDate) > today
+      );
       return res
         .status(200)
-        .json(new ApiResponse(200, result, "Data fetched successfully"));
+        .json(new ApiResponse(200, validCoupons, "Data fetched successfully"));
     } catch (err) {
       next(err);
     }

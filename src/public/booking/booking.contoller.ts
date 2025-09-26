@@ -687,26 +687,15 @@ export const cancelBooking = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?.id;
-    const { bookingId, reason } = req.body;
-
-    if (!bookingId) {
-      throw new ApiError(400, "Booking ID is required");
-    }
+    const { bookingId, status, reason } = req.body;
+    if (!bookingId) throw new ApiError(400, "Booking ID is required");
 
     const booking = await Booking.findById(bookingId);
+    if (!booking) throw new ApiError(404, "Booking not found");
 
-    if (!booking) {
-      throw new ApiError(404, "Booking not found");
-    }
-
-    if (booking.status === "cancelled") {
-      throw new ApiError(409, "Booking is already cancelled");
-    }
-
-    if (booking.status === "completed" || booking.paymentStatus === "paid") {
+    if (booking.status === "cancelled") throw new ApiError(409, "Booking is already cancelled");
+    if (booking.status === "completed" || booking.paymentStatus === "paid")
       throw new ApiError(400, "Completed bookings cannot be cancelled");
-    }
 
     // Free booked slots
     for (const slotId of booking.slots) {
@@ -722,16 +711,14 @@ export const cancelBooking = async (
     }
 
     booking.status = "cancelled";
-    booking.cancellationReason = reason || "Cancelled by user";
+    booking.cancellationReason = reason;
     booking.cancelledAt = new Date();
     await booking.save();
 
-    const user = await User.findById(booking.userId);
-
     return res.status(200).json({
+      data: booking,
       success: true,
       message: "Booking cancelled successfully",
-      data: booking,
     });
   } catch (error) {
     console.error("❌ Error in cancelBooking:", error);
