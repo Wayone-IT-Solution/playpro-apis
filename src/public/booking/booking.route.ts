@@ -9,6 +9,7 @@ import {
   getBookingUser,
   rescheduleBooking,
   getAllTransactions,
+  cancelBooking,   
 } from "../../public/booking/booking.contoller";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { authenticateToken } from "../../middlewares/authMiddleware";
@@ -26,5 +27,7 @@ router.get("/transactions", authenticateToken, asyncHandler(getAllTransactions))
 router.get("/transactions/:id", authenticateToken, asyncHandler(getBookingById));
 
 router.get("/:id", authenticateToken, asyncHandler(getBookingById));
+
+router.put("/cancel", authenticateToken, asyncHandler(cancelBooking));
 
 export default router;

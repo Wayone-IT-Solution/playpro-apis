@@ -17,7 +17,9 @@ export interface IBooking extends Document {
   groundId: mongoose.Types.ObjectId;
   paymentDetails: Record<string, any>;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
-  status: "pending" | "confirmed" | "completed" | "rescheduled";
+  status: "pending" | "confirmed" | "completed" | "rescheduled" | "cancelled";
+  cancellationReason?: string;
+  cancelledAt?: Date;
 }
 
 const bookingSchema = new Schema<IBooking>(
@@ -67,13 +69,21 @@ const bookingSchema = new Schema<IBooking>(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "completed", "rescheduled"],
+      enum: ["pending", "confirmed", "completed", "rescheduled", "cancelled"],
       default: "pending",
     },
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
+    },
+    cancellationReason: {
+      type: String,
+      default: null,
+    },
+    cancelledAt: {
+      type: Date,
+      default: null,
     },
     meta: {
       type: Schema.Types.Mixed,
