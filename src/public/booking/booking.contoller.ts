@@ -5,13 +5,13 @@ import { User } from "../../modals/user.model";
 import ApiResponse from "../../utils/ApiResponse";
 import { Ground } from "../../modals/ground.model";
 import { Booking } from "../../modals/booking.model";
+import { convertToSaudiTime } from "../../utils/helper";
 import { Request, Response, NextFunction } from "express";
+import { sendSMS } from "../../services/twillio.services";
 import { CommonService } from "../../services/common.services";
 import { sendBookingEmail } from "../../utils/confirmationService";
 import { AuthenticatedRequest } from "../../middlewares/authMiddleware";
 import { Coupon, CouponStatus, CouponType } from "../../modals/coupon.model";
-import { generateBookingSMSTemplate, sendSMS } from "../../services/twillio.services";
-import { convertToSaudiTime } from "../../utils/helper";
 
 const bookingService = new CommonService(Booking);
 
@@ -334,18 +334,31 @@ export const getBookingById = async (
   try {
     const bookingId = req.params.id;
 
-    const booking = await Booking.findById(bookingId)
+    if (!bookingId) {
+      throw new ApiError(400, "Booking ID is required");
+    }
+    const booking: any = await Booking.findById(bookingId);
+    const slotIds = booking.slots.map((id: string) => new mongoose.Types.ObjectId(id));
+
+    // Query all slots containing these timeslots
+    const slots: any = await Slot.findOne({
+      groundId: new mongoose.Types.ObjectId(booking.groundId),
+      "timeslots._id": { $in: slotIds }
+    }).lean();
+
+    const timeslotsData = slots.timeslots.filter((t: any) => booking.slots.includes(t._id.toString()))
+
+    const bookingData: any = await Booking.findById(bookingId)
       .populate("userId", "firstName lastName email")
-      .populate("slots")
-      .populate("groundId", "name location");
+      .populate("groundId", "name location")
+      .lean();
 
     if (!booking) {
       throw new ApiError(404, "Booking not found");
     }
-
     return res
       .status(200)
-      .json(new ApiResponse(200, booking, "Booking fetched successfully"));
+      .json(new ApiResponse(200, { ...bookingData, slots: timeslotsData }, "Booking fetched successfully"));
   } catch (error) {
     next(error);
   }
