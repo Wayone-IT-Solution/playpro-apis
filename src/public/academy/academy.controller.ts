@@ -4,6 +4,7 @@ import { Academy } from "../../modals/academic.model";
 import { Request, Response, NextFunction } from "express";
 import { CommonService } from "../../services/common.services";
 import { extractImageUrl } from "../../admin/banner/banner.controller";
+import mongoose from "mongoose";
 
 const AcademyService = new CommonService(Academy);
 
@@ -45,6 +46,60 @@ export const getAllAcademies = async (
   }
 };
 
+export const getAllPublicAcademies = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const pipeline = [
+      {
+        $lookup: {
+          from: "coaches",
+          let: { coachIds: { $map: { input: "$coaches", as: "c", in: { $toObjectId: "$$c" } } } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ["$_id", "$$coachIds"] },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                email: 1,
+                specialization: 1,
+              },
+            },
+          ],
+          as: "coachDetails",
+        },
+      },
+      {
+        $addFields: {
+          coaches: "$coachDetails",
+        },
+      },
+      {
+        $project: {
+          coachDetails: 0, // remove temp field
+        },
+      },
+    ];
+
+    const result = await AcademyService.getAll(
+      { ...req.query, status: "active" },
+      pipeline // 👈 pass pipeline as 2nd arg
+    );
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result, "Data fetched successfully"));
+  } catch (error) {
+    next(error);
+  }
+};
+
 // 📌 Get Academy by ID
 export const getAcademyById = async (
   req: Request,
@@ -57,6 +112,54 @@ export const getAcademyById = async (
     return res
       .status(200)
       .json(new ApiResponse(200, Academy, "Academy found"));
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 📌 Get Academy by ID with detailed coaches
+export const getAcademyPublicById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = req.params.id;
+
+    const pipeline = [
+      { $match: { _id: new mongoose.Types.ObjectId(id), status: "active" } },
+      {
+        $lookup: {
+          from: "coaches", // collection name
+          let: { coachIds: { $map: { input: "$coaches", as: "c", in: { $toObjectId: "$$c" } } } },
+          pipeline: [
+            { $match: { $expr: { $in: ["$_id", "$$coachIds"] } } },
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                email: 1,
+                specialization: 1,
+              },
+            },
+          ],
+          as: "coachDetails",
+        },
+      },
+      {
+        $addFields: { coaches: "$coachDetails" },
+      },
+      { $project: { coachDetails: 0 } },
+    ];
+
+    const AcademyData = await Academy.aggregate(pipeline);
+
+    if (!AcademyData || AcademyData.length === 0) {
+      throw new ApiError(404, "Academy not found");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, AcademyData[0], "Academy found"));
   } catch (err) {
     next(err);
   }

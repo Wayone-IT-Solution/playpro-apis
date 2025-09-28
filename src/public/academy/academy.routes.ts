@@ -5,6 +5,8 @@ import {
     deleteAcademy,
     getAcademyById,
     getAllAcademies,
+    getAcademyPublicById,
+    getAllPublicAcademies
 } from "./academy.controller";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { authenticateToken } from "../../middlewares/authMiddleware";
@@ -19,6 +21,7 @@ router.post(
     s3UploaderMiddleware("academy"),
     asyncHandler(createAcademy));
 router.get("/", authenticateToken, asyncHandler(getAllAcademies));
+router.get("/public", asyncHandler(getAllPublicAcademies));
 router.put(
     "/:id",
     authenticateToken,
@@ -26,6 +29,7 @@ router.put(
     s3UploaderMiddleware("academy"),
     asyncHandler(updateAcademy));
 router.get("/:id", authenticateToken, asyncHandler(getAcademyById));
+router.get("/public/:id", asyncHandler(getAcademyPublicById));
 router.delete("/:id", authenticateToken, asyncHandler(deleteAcademy));
 
 export default router;
